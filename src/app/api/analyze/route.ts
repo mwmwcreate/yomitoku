@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 `;
 
     const response = await openai.responses.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.4-nano',
       instructions,
       input: `以下の状況に関連しそうな法律と、類似する実在の日本の判例を教えてください。\n出力は指定したJSONオブジェクトのみで、前置きやコードフェンス(\`\`\`)は一切含めないでください。\n状況: ${situation}`,
       tools: [{ type: 'web_search' }],

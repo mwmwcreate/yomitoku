@@ -155,25 +155,17 @@ export default function Dashboard() {
             </div>
 
             {result.precedents !== undefined && (
-              <section className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-12 md:py-14 bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl shadow-2xl shadow-slate-900/20 animate-fade-in-up">
-                {/* Section divider hint */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                  <span className="w-1 h-1 rounded-full bg-slate-700" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                </div>
-
+              <section className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-10 md:py-12 bg-[#fbf7ec] rounded-3xl border-y border-[#ede2c4]/60 animate-fade-in-up">
                 {/* Section header */}
                 <div className="flex items-center gap-3.5 mb-8">
-                  <span className="w-11 h-11 rounded-xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30 ring-1 ring-[var(--primary)]/40">
-                    <Gavel className="w-5 h-5 text-white" />
+                  <span className="w-11 h-11 rounded-xl bg-white flex items-center justify-center ring-1 ring-[#ede2c4] shadow-sm">
+                    <Gavel className="w-5 h-5 text-[#8b6f30]" />
                   </span>
                   <div>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className="text-lg font-bold text-[var(--foreground)]">
                       類似する過去の判例
                     </h2>
-                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
+                    <p className="text-xs text-[#8b6f30]/70 mt-0.5">
                       Web検索で取得した実在の裁判例(出典URL付き)
                     </p>
                   </div>
@@ -186,11 +178,11 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-slate-800/60 rounded-2xl ring-1 ring-slate-700/50 p-8 text-center">
-                    <p className="text-sm text-slate-200">
+                  <div className="bg-white/70 rounded-2xl border border-[#ede2c4]/60 p-8 text-center">
+                    <p className="text-sm text-[var(--text-muted)]">
                       今回の状況に類似する判例は見つかりませんでした。
                     </p>
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-[var(--text-light)] mt-2">
                       Web検索で実在の判例が確認できなかったため、判例の提示は行いません。
                     </p>
                   </div>
