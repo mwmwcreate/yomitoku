@@ -155,20 +155,30 @@ export default function Dashboard() {
             </div>
 
             {result.precedents !== undefined && (
-              <div className="space-y-6 pt-6">
-                <div className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-xl bg-[var(--primary-light)] flex items-center justify-center">
-                    <Gavel className="w-4 h-4 text-[var(--primary)]" />
+              <section className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-12 md:py-14 bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl shadow-2xl shadow-slate-900/20 animate-fade-in-up">
+                {/* Section divider hint */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                  <span className="w-1 h-1 rounded-full bg-slate-700" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                </div>
+
+                {/* Section header */}
+                <div className="flex items-center gap-3.5 mb-8">
+                  <span className="w-11 h-11 rounded-xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30 ring-1 ring-[var(--primary)]/40">
+                    <Gavel className="w-5 h-5 text-white" />
                   </span>
                   <div>
-                    <h2 className="text-lg font-bold text-[var(--foreground)] animate-fade-in-up">
+                    <h2 className="text-lg font-bold text-white">
                       類似する過去の判例
                     </h2>
-                    <p className="text-xs text-[var(--text-light)] mt-0.5">
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
                       Web検索で取得した実在の裁判例(出典URL付き)
                     </p>
                   </div>
                 </div>
+
                 {result.precedents.length > 0 ? (
                   <div className="grid gap-6">
                     {result.precedents.map((p, idx) => (
@@ -176,16 +186,16 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-[var(--border)] p-8 text-center">
-                    <p className="text-sm text-[var(--text-muted)]">
+                  <div className="bg-slate-800/60 rounded-2xl ring-1 ring-slate-700/50 p-8 text-center">
+                    <p className="text-sm text-slate-200">
                       今回の状況に類似する判例は見つかりませんでした。
                     </p>
-                    <p className="text-xs text-[var(--text-light)] mt-2">
+                    <p className="text-xs text-slate-500 mt-2">
                       Web検索で実在の判例が確認できなかったため、判例の提示は行いません。
                     </p>
                   </div>
                 )}
-              </div>
+              </section>
             )}
 
             <div className="bg-white p-6 rounded-2xl text-[13px] text-[var(--text-muted)] border border-[var(--border)] mt-10 leading-relaxed animate-fade-in-up">
