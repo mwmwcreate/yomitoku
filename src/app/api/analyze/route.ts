@@ -70,9 +70,8 @@ export async function POST(req: Request) {
     const response = await openai.responses.create({
       model: 'gpt-4o-mini',
       instructions,
-      input: `以下の状況に関連しそうな法律と、類似する実在の日本の判例を教えてください。\n状況: ${situation}`,
+      input: `以下の状況に関連しそうな法律と、類似する実在の日本の判例を教えてください。\n出力は指定したJSONオブジェクトのみで、前置きやコードフェンス(\`\`\`)は一切含めないでください。\n状況: ${situation}`,
       tools: [{ type: 'web_search' }],
-      text: { format: { type: 'json_object' } },
       temperature: 0.2,
     });
 
