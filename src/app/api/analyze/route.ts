@@ -68,13 +68,17 @@ export async function POST(req: Request) {
 `;
 
     const response = await openai.responses.create({
-      model: 'gpt-5.4-nano',
+      model: 'gpt-4o-mini',
       instructions,
       input: `以下の状況に関連しそうな法律と、類似する実在の日本の判例を教えてください。\n状況: ${situation}`,
       tools: [{ type: 'web_search' }],
       text: { format: { type: 'json_object' } },
       temperature: 0.2,
     });
+
+    console.log('[analyze] output item types:', response.output?.map((item) => item.type));
+    console.log('[analyze] output_text length:', response.output_text?.length ?? 0);
+    console.log('[analyze] output_text head:', (response.output_text ?? '').slice(0, 600));
 
     const aiOutputText = response.output_text;
     if (!aiOutputText) {
@@ -93,6 +97,13 @@ export async function POST(req: Request) {
     if (!Array.isArray(aiOutput.precedents)) {
       aiOutput.precedents = [];
     }
+
+    console.log(
+      '[analyze] precedents returned:',
+      (aiOutput.precedents as unknown[]).length,
+      'web_search calls:',
+      response.output?.filter((item) => item.type === 'web_search_call').length ?? 0,
+    );
 
     const docRef = await db.collection('analyses').add({
       userId,

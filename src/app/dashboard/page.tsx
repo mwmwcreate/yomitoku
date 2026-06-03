@@ -148,7 +148,7 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {result.precedents && result.precedents.length > 0 && (
+            {result.precedents !== undefined && (
               <div className="space-y-6 pt-6">
                 <div className="flex items-center gap-3">
                   <span className="w-9 h-9 rounded-xl bg-[var(--primary-light)] flex items-center justify-center">
@@ -163,11 +163,22 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                <div className="grid gap-6">
-                  {result.precedents.map((p, idx) => (
-                    <PrecedentCard key={idx} precedent={p} index={idx} />
-                  ))}
-                </div>
+                {result.precedents.length > 0 ? (
+                  <div className="grid gap-6">
+                    {result.precedents.map((p, idx) => (
+                      <PrecedentCard key={idx} precedent={p} index={idx} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-[var(--border)] p-8 text-center">
+                    <p className="text-sm text-[var(--text-muted)]">
+                      今回の状況に類似する判例は見つかりませんでした。
+                    </p>
+                    <p className="text-xs text-[var(--text-light)] mt-2">
+                      Web検索で実在の判例が確認できなかったため、判例の提示は行いません。
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
