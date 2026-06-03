@@ -49,11 +49,17 @@ export default function Dashboard() {
         body: JSON.stringify({ situation }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        throw new Error("分析に失敗しました。時間をおいて再度お試しください。");
+        const detail = data?.details || data?.error;
+        throw new Error(
+          detail
+            ? `分析に失敗しました (${res.status}): ${detail}`
+            : "分析に失敗しました。時間をおいて再度お試しください。"
+        );
       }
 
-      const data = await res.json();
       setResult(data.result);
     } catch (err: any) {
       setError(err.message);
