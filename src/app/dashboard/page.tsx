@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import DisclaimerAlert from "@/components/DisclaimerAlert";
 import LawCard, { Law } from "@/components/LawCard";
-import { Send, Loader2, Scale } from "lucide-react";
+import PrecedentCard, { Precedent } from "@/components/PrecedentCard";
+import { Send, Loader2, Scale, Gavel } from "lucide-react";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -14,7 +15,7 @@ export default function Dashboard() {
 
   const [situation, setSituation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<{ laws: Law[]; disclaimer: string } | null>(null);
+  const [result, setResult] = useState<{ laws: Law[]; precedents?: Precedent[]; disclaimer: string } | null>(null);
   const [error, setError] = useState("");
 
   if (status === "loading") {
@@ -146,6 +147,29 @@ export default function Dashboard() {
                 <LawCard key={idx} law={law} index={idx} />
               ))}
             </div>
+
+            {result.precedents && result.precedents.length > 0 && (
+              <div className="space-y-6 pt-6">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-[var(--primary-light)] flex items-center justify-center">
+                    <Gavel className="w-4 h-4 text-[var(--primary)]" />
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-bold text-[var(--foreground)] animate-fade-in-up">
+                      類似する過去の判例
+                    </h2>
+                    <p className="text-xs text-[var(--text-light)] mt-0.5">
+                      Web検索で取得した実在の裁判例(出典URL付き)
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-6">
+                  {result.precedents.map((p, idx) => (
+                    <PrecedentCard key={idx} precedent={p} index={idx} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="bg-white p-6 rounded-2xl text-[13px] text-[var(--text-muted)] border border-[var(--border)] mt-10 leading-relaxed animate-fade-in-up">
               {result.disclaimer}

@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/firebase-admin";
 import Header from "@/components/Header";
 import { Law } from "@/components/LawCard";
-import { Clock, ArrowLeft, BookOpen } from "lucide-react";
+import { Precedent } from "@/components/PrecedentCard";
+import { Clock, ArrowLeft, BookOpen, Gavel, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 type HistoryItem = {
   id: string;
   input: string;
-  output: { laws: Law[]; disclaimer: string };
+  output: { laws: Law[]; precedents?: Precedent[]; disclaimer: string };
   createdAt: string;
 };
 
@@ -142,6 +143,35 @@ export default async function HistoryPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Precedents */}
+                  {item.output?.precedents && item.output.precedents.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold text-[var(--text-light)] tracking-widest uppercase mb-3 flex items-center gap-1.5">
+                        <Gavel className="w-3.5 h-3.5 text-[var(--primary)]" />
+                        類似判例
+                      </h4>
+                      <ul className="space-y-2">
+                        {item.output.precedents.map((p, idx) => (
+                          <li key={idx} className="text-sm text-[var(--foreground)] flex items-start gap-2">
+                            <span className="text-[var(--text-light)] shrink-0">•</span>
+                            <a
+                              href={p.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[var(--primary)] hover:text-[var(--primary-dark)] inline-flex items-center gap-1 leading-snug"
+                            >
+                              {p.title}
+                              <ExternalLink className="w-3 h-3 shrink-0" />
+                            </a>
+                            {p.court && (
+                              <span className="text-xs text-[var(--text-muted)] shrink-0">({p.court})</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
