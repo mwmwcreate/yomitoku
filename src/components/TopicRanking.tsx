@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { TrendingUp } from "lucide-react";
+import TopicAnswerModal from "./TopicAnswerModal";
+
+type RankingExample = {
+  id: string;
+  text: string;
+  count: number;
+};
 
 type RankingTopic = {
   id: string;
@@ -9,7 +16,7 @@ type RankingTopic = {
   icon: string;
   count: number;
   rank: number;
-  summaries: string[];
+  examples: RankingExample[];
 };
 
 type Status = "loading" | "ready" | "error";
@@ -24,6 +31,7 @@ export default function TopicRanking({
   const [topics, setTopics] = useState<RankingTopic[]>([]);
   const [minVisible, setMinVisible] = useState(3);
   const [status, setStatus] = useState<Status>("loading");
+  const [selected, setSelected] = useState<RankingExample | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,12 +96,24 @@ export default function TopicRanking({
                 </h3>
                 <span className="text-[11px] text-[var(--text-muted)] tabular-nums shrink-0">{t.count}件</span>
               </div>
-              {t.summaries.length > 0 ? (
-                <ul className="space-y-1.5 pl-1">
-                  {t.summaries.map((s, idx) => (
-                    <li key={idx} className="text-xs text-[var(--text-muted)] flex items-start gap-1.5 leading-relaxed">
-                      <span className="text-[var(--text-light)] shrink-0 mt-0.5">・</span>
-                      <span>{s}</span>
+              {t.examples.length > 0 ? (
+                <ul className="space-y-1 pl-1">
+                  {t.examples.map((ex) => (
+                    <li key={ex.id}>
+                      <button
+                        onClick={() => setSelected(ex)}
+                        className="w-full text-left text-xs text-[var(--text-muted)] flex items-start gap-1.5 leading-relaxed rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-[var(--primary-lighter)] hover:text-[var(--primary-dark)] transition-colors duration-300 cursor-pointer"
+                      >
+                        <span className="text-[var(--text-light)] shrink-0 mt-0.5">・</span>
+                        <span className="flex-1">
+                          {ex.text}
+                          {ex.count > 1 && (
+                            <span className="ml-1.5 inline-block align-middle text-[10px] font-bold text-[var(--primary)] bg-[var(--primary-light)] rounded-full px-1.5 py-0.5 tabular-nums">
+                              ×{ex.count}
+                            </span>
+                          )}
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -109,9 +129,17 @@ export default function TopicRanking({
             </div>
           ))}
           <p className="text-[10px] text-[var(--text-light)] pt-3 border-t border-[var(--border-light)] leading-relaxed">
-            相談例はAIが要約・匿名化したものです（実際の入力文そのものではありません）。
+            相談例をクリックすると、そのときのAIの回答例が見られます。相談例はAIが要約・匿名化したものです（実際の入力文そのものではありません）。
           </p>
         </div>
+      )}
+
+      {selected && (
+        <TopicAnswerModal
+          analysisId={selected.id}
+          title={selected.text}
+          onClose={() => setSelected(null)}
+        />
       )}
     </aside>
   );
