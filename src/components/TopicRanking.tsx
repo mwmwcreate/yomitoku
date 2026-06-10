@@ -97,9 +97,13 @@ export default function TopicRanking({
                     </li>
                   ))}
                 </ul>
-              ) : (
+              ) : t.count < minVisible ? (
                 <p className="text-[11px] text-[var(--text-light)] pl-1 leading-relaxed">
                   件数が少ないため内容は非表示（{minVisible}件未満）
+                </p>
+              ) : (
+                <p className="text-[11px] text-[var(--text-light)] pl-1 leading-relaxed">
+                  相談例を準備中です。
                 </p>
               )}
             </div>
