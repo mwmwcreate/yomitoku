@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Loader2, Gavel, MessageCircleQuestion } from "lucide-react";
 import LawCard, { Law } from "./LawCard";
 import PrecedentCard, { Precedent } from "./PrecedentCard";
@@ -57,15 +58,17 @@ export default function TopicAnswerModal({
     };
   }, [onClose]);
 
-  return (
+  // sticky なサイドバー内で描画するとスタッキングコンテキストに閉じ込められ
+  // ページ内容がモーダルに被るため、ポータルで body 直下に出す。
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
       role="dialog"
       aria-modal="true"
       aria-label="相談例の回答"
     >
       <div
-        className="absolute inset-0 bg-black/40 animate-fade-in"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
       <div className="relative bg-[var(--primary-lighter)] w-full max-w-3xl max-h-[85vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
@@ -149,6 +152,7 @@ export default function TopicAnswerModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
