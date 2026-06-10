@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { OpenAI } from 'openai';
 import { db } from '@/lib/firebase-admin';
+import { CATEGORY_INSTRUCTION, normalizeCategory } from '@/lib/topicCategories';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy_key_for_build',
@@ -13,12 +14,12 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string } | undefined)?.id;
 
-    if (!session || !session.user || !(session.user as any).id) {
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
     const body = await req.json();
     const { situation } = body;
 
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
 - 架空の判例や、出典が不明な事例は**絶対に含めない**でください。
 - 各判例には必ず出典URLを含めてください。URLが取得できない場合はその判例は出力しないでください。
 - 判例が見つからない場合は precedents を空配列([])にしてください。捏造は厳禁。
+${CATEGORY_INSTRUCTION}
 
 以下のJSON形式で**厳密に**出力してください(JSON以外の説明文は不要):
 
@@ -55,14 +57,17 @@ export async function POST(req: Request) {
   ],
   "precedents": [
     {
-      "title": "判例の通称または事件名（例: 〇〇事件、令和X年(受)第XXX号）",
-      "court": "裁判所名（例: 最高裁判所第二小法廷）",
-      "date": "判決日（例: 令和3年10月15日 または 2021-10-15）",
+      "title": "判例の通称または事件名",
+      "court": "裁判所名",
+      "date": "判決日",
       "summary": "事案と判旨の簡潔な要約（150〜250字程度）",
       "relation": "今回の状況とどう似ているか・どう異なるか",
       "url": "出典URL（必須）"
     }
   ],
+  "category": "上記のジャンルidのいずれか（必須。判断できなければ other）",
+  "categorySuggestion": "category が other のときのみ短いジャンル名、それ以外は空文字",
+  "summary": "個人が特定されない、抽象化された相談の要約（40〜60字程度の1文）",
   "disclaimer": "これは学習目的の参考情報であり、法的な助言ではありません。違法・合法の判断を行うものではありませんので、実際の判断は弁護士などの専門家に確認してください。"
 }
 `;
@@ -74,10 +79,6 @@ export async function POST(req: Request) {
       tools: [{ type: 'web_search' }],
       temperature: 0.2,
     });
-
-    console.log('[analyze] output item types:', response.output?.map((item) => item.type));
-    console.log('[analyze] output_text length:', response.output_text?.length ?? 0);
-    console.log('[analyze] output_text head:', (response.output_text ?? '').slice(0, 600));
 
     const aiOutputText = response.output_text;
     if (!aiOutputText) {
@@ -97,23 +98,29 @@ export async function POST(req: Request) {
       aiOutput.precedents = [];
     }
 
-    console.log(
-      '[analyze] precedents returned:',
-      (aiOutput.precedents as unknown[]).length,
-      'web_search calls:',
-      response.output?.filter((item) => item.type === 'web_search_call').length ?? 0,
-    );
+    const category = normalizeCategory(aiOutput.category);
+    const suggestionRaw = aiOutput.categorySuggestion;
+    const categorySuggestion =
+      category === 'other' && typeof suggestionRaw === 'string'
+        ? suggestionRaw.trim().slice(0, 50)
+        : '';
+    const summaryRaw = aiOutput.summary;
+    const summary = typeof summaryRaw === 'string' ? summaryRaw.trim().slice(0, 120) : '';
 
     const docRef = await db.collection('analyses').add({
       userId,
       input: situation,
       output: aiOutput,
+      category,
+      categorySuggestion,
+      summary,
       createdAt: new Date(),
     });
 
     return NextResponse.json({ id: docRef.id, result: aiOutput });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Analyze API error:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: 'Internal Server Error', details }, { status: 500 });
   }
 }
