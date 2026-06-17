@@ -98,7 +98,7 @@ export default function Home() {
       </main>
 
       <footer className="w-full py-10 text-center text-[var(--text-light)] text-xs border-t border-[var(--border-light)]">
-        <p>&copy; 2026 法律ナビ v1</p>
+        <p>&copy; 2026 法律ナビ</p>
       </footer>
     </div>
   );

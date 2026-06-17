@@ -24,9 +24,11 @@ type Status = "loading" | "ready" | "error";
 export default function TopicRanking({
   refreshKey = 0,
   className = "",
+  onUseExample,
 }: {
   refreshKey?: number;
   className?: string;
+  onUseExample?: (text: string) => void;
 }) {
   const [topics, setTopics] = useState<RankingTopic[]>([]);
   const [minVisible, setMinVisible] = useState(3);
@@ -139,6 +141,14 @@ export default function TopicRanking({
           analysisId={selected.id}
           title={selected.text}
           onClose={() => setSelected(null)}
+          onUse={
+            onUseExample
+              ? () => {
+                  onUseExample(selected.text);
+                  setSelected(null);
+                }
+              : undefined
+          }
         />
       )}
     </aside>
