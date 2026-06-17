@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { OpenAI } from 'openai';
 import { db } from '@/lib/firebase-admin';
 import { CATEGORY_INSTRUCTION, normalizeCategory } from '@/lib/topicCategories';
+import { extractArrayObjects } from '@/lib/streamParse';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy_key_for_build',
@@ -12,22 +13,26 @@ const openai = new OpenAI({
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let situation: unknown;
   try {
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string } | undefined)?.id;
+    ({ situation } = await req.json());
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!situation || typeof situation !== 'string') {
+    return NextResponse.json({ error: 'Situation is required' }, { status: 400 });
+  }
+  const situationText = situation;
 
-    const body = await req.json();
-    const { situation } = body;
-
-    if (!situation) {
-      return NextResponse.json({ error: 'Situation is required' }, { status: 400 });
-    }
-
-    const instructions = `
+  const instructions = `
 あなたは日本の法律に詳しいアシスタントです。ユーザーが入力した状況に対し、「関連する可能性がある法律」とその「関係性」、さらに「類似する実際の日本の判例(前例)」を学習・注意喚起目的で提供してください。
 
 【厳守事項】
@@ -43,7 +48,8 @@ export async function POST(req: Request) {
 - 判例が見つからない場合は precedents を空配列([])にしてください。捏造は厳禁。
 ${CATEGORY_INSTRUCTION}
 
-以下のJSON形式で**厳密に**出力してください(JSON以外の説明文は不要):
+以下のJSON形式で**厳密に**出力してください(JSON以外の説明文は不要)。
+カードを早く表示するため、必ず "laws" を先に、その後 "precedents" を出力してください:
 
 {
   "laws": [
@@ -72,55 +78,116 @@ ${CATEGORY_INSTRUCTION}
 }
 `;
 
-    const response = await openai.responses.create({
-      model: 'gpt-5.4-nano',
-      instructions,
-      input: `以下の状況に関連しそうな法律と、類似する実在の日本の判例を教えてください。\n出力は指定したJSONオブジェクトのみで、前置きやコードフェンス(\`\`\`)は一切含めないでください。\n状況: ${situation}`,
-      tools: [{ type: 'web_search' }],
-      temperature: 0.2,
-    });
+  const encoder = new TextEncoder();
 
-    const aiOutputText = response.output_text;
-    if (!aiOutputText) {
-      throw new Error('AI returned empty response');
-    }
+  const stream = new ReadableStream({
+    async start(controller) {
+      let closed = false;
+      const send = (event: string, data: unknown) => {
+        if (closed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
+          );
+        } catch {
+          closed = true;
+        }
+      };
 
-    let aiOutput: Record<string, unknown>;
-    try {
-      aiOutput = JSON.parse(aiOutputText);
-    } catch {
-      const match = aiOutputText.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('AI output is not valid JSON');
-      aiOutput = JSON.parse(match[0]);
-    }
+      try {
+        const aiStream = await openai.responses.create({
+          model: 'gpt-5.4-nano',
+          instructions,
+          input: `以下の状況に関連しそうな法律と、類似する実在の日本の判例を教えてください。\n出力は指定したJSONオブジェクトのみで、前置きやコードフェンス(\`\`\`)は一切含めないでください。\n状況: ${situationText}`,
+          tools: [{ type: 'web_search' }],
+          temperature: 0.2,
+          stream: true,
+        });
 
-    if (!Array.isArray(aiOutput.precedents)) {
-      aiOutput.precedents = [];
-    }
+        let buffer = '';
+        let lawsEmitted = 0;
+        let precsEmitted = 0;
+        let searchAnnounced = false;
 
-    const category = normalizeCategory(aiOutput.category);
-    const suggestionRaw = aiOutput.categorySuggestion;
-    const categorySuggestion =
-      category === 'other' && typeof suggestionRaw === 'string'
-        ? suggestionRaw.trim().slice(0, 50)
-        : '';
-    const summaryRaw = aiOutput.summary;
-    const summary = typeof summaryRaw === 'string' ? summaryRaw.trim().slice(0, 120) : '';
+        for await (const event of aiStream) {
+          if (event.type === 'response.output_text.delta') {
+            buffer += event.delta;
+            const lr = extractArrayObjects(buffer, 'laws');
+            for (let k = lawsEmitted; k < lr.objects.length; k++) send('law', lr.objects[k]);
+            lawsEmitted = lr.objects.length;
+            const pr = extractArrayObjects(buffer, 'precedents');
+            for (let k = precsEmitted; k < pr.objects.length; k++) send('precedent', pr.objects[k]);
+            precsEmitted = pr.objects.length;
+          } else if (event.type === 'response.web_search_call.in_progress' && !searchAnnounced) {
+            searchAnnounced = true;
+            send('status', { message: '実在の判例をWeb検索しています…' });
+          }
+        }
 
-    const docRef = await db.collection('analyses').add({
-      userId,
-      input: situation,
-      output: aiOutput,
-      category,
-      categorySuggestion,
-      summary,
-      createdAt: new Date(),
-    });
+        if (!buffer.trim()) throw new Error('AI returned empty response');
 
-    return NextResponse.json({ id: docRef.id, result: aiOutput });
-  } catch (error) {
-    console.error('Analyze API error:', error);
-    const details = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: 'Internal Server Error', details }, { status: 500 });
-  }
+        // 全文を権威データとしてパース（増分で取りこぼした分の最終確定）
+        let aiOutput: Record<string, unknown>;
+        try {
+          aiOutput = JSON.parse(buffer);
+        } catch {
+          const match = buffer.match(/\{[\s\S]*\}/);
+          if (!match) throw new Error('AI output is not valid JSON');
+          aiOutput = JSON.parse(match[0]);
+        }
+
+        if (!Array.isArray(aiOutput.laws)) aiOutput.laws = [];
+        if (!Array.isArray(aiOutput.precedents)) aiOutput.precedents = [];
+
+        const category = normalizeCategory(aiOutput.category);
+        const suggestionRaw = aiOutput.categorySuggestion;
+        const categorySuggestion =
+          category === 'other' && typeof suggestionRaw === 'string'
+            ? suggestionRaw.trim().slice(0, 50)
+            : '';
+        const summaryRaw = aiOutput.summary;
+        const summary = typeof summaryRaw === 'string' ? summaryRaw.trim().slice(0, 120) : '';
+        const disclaimer = typeof aiOutput.disclaimer === 'string' ? aiOutput.disclaimer : '';
+
+        const docRef = await db.collection('analyses').add({
+          userId,
+          input: situationText,
+          output: aiOutput,
+          category,
+          categorySuggestion,
+          summary,
+          createdAt: new Date(),
+        });
+
+        // 確定結果を送り、クライアントの表示を権威データに揃える
+        send('done', {
+          id: docRef.id,
+          result: {
+            laws: aiOutput.laws,
+            precedents: aiOutput.precedents,
+            disclaimer,
+          },
+        });
+      } catch (error) {
+        console.error('Analyze API error:', error);
+        const details = error instanceof Error ? error.message : String(error);
+        send('error', { message: details });
+      } finally {
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    },
+  });
 }
