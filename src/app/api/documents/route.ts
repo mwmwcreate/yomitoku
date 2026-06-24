@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { OpenAI } from 'openai';
 import { extractArrayObjects } from '@/lib/streamParse';
+import { getDocumentType } from '@/lib/documentTypes';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy_key_for_build',
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { document?: unknown; question?: unknown };
+  let body: { document?: unknown; question?: unknown; docType?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
 
   const document = typeof body.document === 'string' ? body.document : '';
   const question = typeof body.question === 'string' ? body.question : '';
+  const docType = getDocumentType(body.docType);
 
   if (!document.trim()) {
     return NextResponse.json({ error: '文書が入力されていません' }, { status: 400 });
@@ -46,8 +48,13 @@ export async function POST(req: Request) {
   const doc = truncated ? document.slice(0, MAX_DOC_CHARS) : document;
   const q = question.slice(0, MAX_QUESTION_CHARS);
 
+  const typeHint = docType.hint
+    ? `今回の文書は「${docType.hint}」の可能性がありますが、決めつけず、最終的には提示された文書の実際の内容に従ってください。`
+    : '';
+
   const instructions = `
-あなたは、ユーザーが提示した「賃貸契約書・管理規約などの規約文書」を読み解くアシスタントです。
+あなたは、ユーザーが提示した「規約・契約・ルール文書」(賃貸契約、就業規則、利用規約、校則、保険約款 など)を読み解くアシスタントです。
+${typeHint}
 ユーザーの質問に対し、**提示された文書の記載だけ**を根拠に、中立に答えてください。
 
 【厳守事項】
@@ -68,7 +75,7 @@ export async function POST(req: Request) {
       "explanation": "この箇所が質問にどう関係し、どう読めるか。中立・非断定で説明する。"
     }
   ],
-  "checkWith": "最終的に確認すべき相手（例: 管理会社・貸主・不動産会社）",
+  "checkWith": "最終的に確認すべき相手（文書の種類に応じた適切な相手。例: ${docType.checkWith}）",
   "notFound": false,
   "disclaimer": "これは提示された文書の記載を整理した参考情報であり、法的な助言や最終的な判断ではありません。実際の取り扱いは契約相手や専門家にご確認ください。"
 }

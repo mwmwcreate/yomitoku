@@ -7,26 +7,41 @@ import Header from "@/components/Header";
 import ModeSwitch from "@/components/ModeSwitch";
 import ClauseCard, { Finding } from "@/components/ClauseCard";
 import ConsultationLinks from "@/components/ConsultationLinks";
-import { Send, Loader2, FileText, Sparkles, CheckCircle2, SearchX, PhoneCall } from "lucide-react";
+import { DOCUMENT_TYPES, getDocumentType } from "@/lib/documentTypes";
+import {
+  Send,
+  Loader2,
+  FileText,
+  Sparkles,
+  CheckCircle2,
+  SearchX,
+  PhoneCall,
+  Home,
+  Briefcase,
+  Smartphone,
+  GraduationCap,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 
 type Phase = "idle" | "analyzing" | "done";
 
 const MAX_DOC_CHARS = 12000;
 
-// 賃貸契約・管理規約でよくある質問。クリックで質問欄に入る。
-const STARTER_QUESTIONS = [
-  "ペットは飼える？",
-  "途中で解約したら違約金はかかる？",
-  "退去時の原状回復はどこまで自分の負担？",
-  "更新料はいくら／いつ払う？",
-  "又貸し（転貸）はしてもいい？",
-  "騒音やゴミ出しのルールは？",
-];
+const TYPE_ICONS: Record<string, LucideIcon> = {
+  rent: Home,
+  work: Briefcase,
+  subscription: Smartphone,
+  school: GraduationCap,
+  insurance: ShieldCheck,
+  other: FileText,
+};
 
 export default function DocumentsPage() {
   const { status } = useSession();
   const router = useRouter();
 
+  const [docTypeId, setDocTypeId] = useState("rent");
   const [document, setDocument] = useState("");
   const [question, setQuestion] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
@@ -58,6 +73,7 @@ export default function DocumentsPage() {
 
   const isLoading = phase === "analyzing";
   const docOver = document.length > MAX_DOC_CHARS;
+  const docType = getDocumentType(docTypeId);
 
   const pickQuestion = (q: string) => {
     setQuestion(q);
@@ -81,7 +97,7 @@ export default function DocumentsPage() {
       const res = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ document, question }),
+        body: JSON.stringify({ document, question, docType: docTypeId }),
       });
 
       if (!res.ok || !res.body) {
@@ -184,7 +200,7 @@ export default function DocumentsPage() {
             規約・契約から調べる
           </h1>
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            賃貸契約書や管理規約を貼り付けて質問すると、AIが該当箇所を引用しながら中立に整理します。違法・合法やOK/ダメの判断はしません。
+            賃貸契約・就業規則・利用規約・校則などの文書を貼り付けて質問すると、AIが該当箇所を引用しながら中立に整理します。違法・合法やOK/ダメの判断はしません。
           </p>
         </div>
 
@@ -199,17 +215,44 @@ export default function DocumentsPage() {
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl border border-[var(--border)] p-7 md:p-9 mb-10 animate-fade-in-up delay-200 space-y-6"
         >
+          {/* 文書の種類 */}
+          <div>
+            <label className="text-base font-bold text-[var(--foreground)] block mb-2.5">① 文書の種類</label>
+            <div className="flex flex-wrap gap-2">
+              {DOCUMENT_TYPES.map((t) => {
+                const Icon = TYPE_ICONS[t.id] ?? FileText;
+                const active = t.id === docTypeId;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setDocTypeId(t.id)}
+                    disabled={isLoading}
+                    className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-2 border transition-colors duration-300 disabled:opacity-40 ${
+                      active
+                        ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                        : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--primary-lighter)] hover:text-[var(--primary-dark)]"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 文書 */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <label className="text-base font-bold text-[var(--foreground)]">① 規約・契約を貼り付け</label>
+              <label className="text-base font-bold text-[var(--foreground)]">② 文書を貼り付け</label>
               <span className={`text-[11px] tabular-nums ${docOver ? "text-red-500" : "text-[var(--text-light)]"}`}>
                 {document.length.toLocaleString()} / {MAX_DOC_CHARS.toLocaleString()}字
               </span>
             </div>
             <textarea
               className="w-full h-48 p-5 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
-              placeholder="賃貸借契約書や管理規約の本文をここに貼り付けてください。（該当しそうな章だけでもOK）"
+              placeholder={docType.placeholder}
               value={document}
               onChange={(e) => setDocument(e.target.value)}
               disabled={isLoading}
@@ -223,12 +266,12 @@ export default function DocumentsPage() {
 
           {/* 質問 */}
           <div>
-            <label className="text-base font-bold text-[var(--foreground)] block mb-2.5">② 聞きたいこと</label>
+            <label className="text-base font-bold text-[var(--foreground)] block mb-2.5">③ 聞きたいこと</label>
             <input
               ref={questionRef}
               type="text"
               className="w-full p-4 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm transition-all duration-300"
-              placeholder="例: ペットは飼える？"
+              placeholder={`例: ${docType.starters[0]}`}
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               disabled={isLoading}
@@ -239,7 +282,7 @@ export default function DocumentsPage() {
                 よくある質問から
               </p>
               <div className="flex flex-wrap gap-2">
-                {STARTER_QUESTIONS.map((q) => (
+                {docType.starters.map((q) => (
                   <button
                     key={q}
                     type="button"
