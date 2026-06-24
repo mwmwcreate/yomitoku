@@ -9,6 +9,7 @@ import LawCard, { Law } from "@/components/LawCard";
 import PrecedentCard, { Precedent } from "@/components/PrecedentCard";
 import TopicRanking from "@/components/TopicRanking";
 import ConsultationLinks from "@/components/ConsultationLinks";
+import ModeSwitch from "@/components/ModeSwitch";
 import { Send, Loader2, Scale, Gavel, Sparkles, MessageCirclePlus } from "lucide-react";
 
 type Phase = "idle" | "analyzing" | "done";
@@ -191,6 +192,9 @@ export default function Dashboard() {
             className="order-2 lg:order-1 mt-10 lg:mt-0 w-full lg:w-[300px] lg:shrink-0 lg:sticky lg:top-24"
           />
           <div className="order-1 lg:order-2 lg:flex-1 lg:min-w-0">
+            <div className="mb-8 animate-fade-in-up">
+              <ModeSwitch />
+            </div>
             <div className="mb-10 animate-fade-in-up">
               <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">法律ナビ</h1>
               <p className="text-sm text-[var(--text-muted)]">気になる状況を入力して、関連する法律を調べてみましょう。</p>
