@@ -3,8 +3,8 @@ import "./globals.css";
 import Provider from "@/components/Provider";
 
 export const metadata: Metadata = {
-  title: "法律ナビ v1",
-  description: "日常の疑問に関連する法律をAIが分析し、わかりやすく解説する学習用Webアプリ",
+  title: "よみとく｜法律・契約・規約をやさしく読み解く",
+  description: "日常の疑問に関係する法律や、わかりにくい契約・規約を、AIが根拠とともに整理する学習用Webアプリ",
 };
 
 export default function RootLayout({

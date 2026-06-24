@@ -196,7 +196,7 @@ export default function Dashboard() {
               <ModeSwitch />
             </div>
             <div className="mb-10 animate-fade-in-up">
-              <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">法律ナビ</h1>
+              <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">法律から調べる</h1>
               <p className="text-sm text-[var(--text-muted)]">気になる状況を入力して、関連する法律を調べてみましょう。</p>
             </div>
             <div className="mb-10 animate-fade-in-up delay-100">

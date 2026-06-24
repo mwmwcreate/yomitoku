@@ -18,17 +18,17 @@ export default function Home() {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight animate-fade-in-up delay-100">
-            あなたの日常に、
-            <br className="md:hidden" />
-            <span className="text-[var(--primary)]">法律のナビ</span>を。
+            法律も、契約も、規約も。
+            <br />
+            <span className="text-[var(--primary)]">やさしく読み解く</span>。
           </h1>
 
           <p className="mt-6 text-base md:text-lg text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed animate-fade-in-up delay-200">
-            「これって法律的にどうなんだろう？」
-            <br />
-            そんな疑問をAIが分析し、
+            「これって大丈夫？」という日常の疑問も、
             <br className="md:hidden" />
-            関係しそうな法律をわかりやすく解説します。
+            わかりにくい契約書や利用規約も、
+            <br />
+            AIが関係する根拠とともに整理します。
           </p>
         </section>
 
@@ -87,7 +87,7 @@ export default function Home() {
           <div className="bg-white p-10 md:p-12 rounded-2xl border border-[var(--border)] text-center animate-fade-in-up delay-600">
             <h2 className="text-xl font-bold mb-3">さっそく始めましょう</h2>
             <p className="text-sm text-[var(--text-muted)] mb-8 leading-relaxed">
-              法律ナビのご利用には、Discordアカウントでのログインが必要です。
+              よみとくのご利用には、Discordアカウントでのログインが必要です。
             </p>
             <p className="text-xs text-[var(--text-light)] flex items-center justify-center gap-1">
               <ArrowRight className="w-3 h-3" />
@@ -98,7 +98,7 @@ export default function Home() {
       </main>
 
       <footer className="w-full py-10 text-center text-[var(--text-light)] text-xs border-t border-[var(--border-light)]">
-        <p>&copy; 2026 法律ナビ</p>
+        <p>&copy; 2026 よみとく</p>
       </footer>
     </div>
   );
