@@ -15,7 +15,7 @@ export default function Header() {
           className="flex items-center gap-2.5 text-[var(--primary)] hover:opacity-70 transition-opacity duration-300"
         >
           <Scale className="h-5 w-5" strokeWidth={2.5} />
-          <span className="font-bold text-lg tracking-wide">よみとく</span>
+          <span className="font-bold text-lg tracking-wide lowercase">yomitoku</span>
         </Link>
 
         <nav className="flex items-center gap-6">

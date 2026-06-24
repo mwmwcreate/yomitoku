@@ -87,7 +87,7 @@ export default function Home() {
           <div className="bg-white p-10 md:p-12 rounded-2xl border border-[var(--border)] text-center animate-fade-in-up delay-600">
             <h2 className="text-xl font-bold mb-3">さっそく始めましょう</h2>
             <p className="text-sm text-[var(--text-muted)] mb-8 leading-relaxed">
-              よみとくのご利用には、Discordアカウントでのログインが必要です。
+              yomitoku のご利用には、Discordアカウントでのログインが必要です。
             </p>
             <p className="text-xs text-[var(--text-light)] flex items-center justify-center gap-1">
               <ArrowRight className="w-3 h-3" />
@@ -98,7 +98,7 @@ export default function Home() {
       </main>
 
       <footer className="w-full py-10 text-center text-[var(--text-light)] text-xs border-t border-[var(--border-light)]">
-        <p>&copy; 2026 よみとく</p>
+        <p>&copy; 2026 yomitoku</p>
       </footer>
     </div>
   );
