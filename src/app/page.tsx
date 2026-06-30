@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import DisclaimerAlert from "@/components/DisclaimerAlert";
-import { Scale, Search, BookOpenCheck, ShieldCheck, ArrowRight } from "lucide-react";
+import ModeEntry from "@/components/ModeEntry";
+import { Scale, Search, BookOpenCheck, ShieldCheck } from "lucide-react";
 
 export default function Home() {
   return (
@@ -78,21 +79,21 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Disclaimer + CTA */}
-        <section className="pb-24 md:pb-32 max-w-2xl mx-auto space-y-8">
+        {/* 入口: ジャンルで分ける */}
+        <section className="pb-16 md:pb-20">
+          <div className="text-center mb-8 animate-fade-in-up">
+            <h2 className="text-xl font-bold">どちらから調べますか？</h2>
+            <p className="text-sm text-[var(--text-muted)] mt-2">
+              選ぶと、そのジャンルに最適化された画面に進みます（初回はDiscordログイン）。
+            </p>
+          </div>
+          <ModeEntry />
+        </section>
+
+        {/* Disclaimer */}
+        <section className="pb-24 md:pb-32 max-w-2xl mx-auto">
           <div className="animate-fade-in-up delay-600">
             <DisclaimerAlert />
-          </div>
-
-          <div className="bg-white p-10 md:p-12 rounded-2xl border border-[var(--border)] text-center animate-fade-in-up delay-600">
-            <h2 className="text-xl font-bold mb-3">さっそく始めましょう</h2>
-            <p className="text-sm text-[var(--text-muted)] mb-8 leading-relaxed">
-              yomitoku のご利用には、Discordアカウントでのログインが必要です。
-            </p>
-            <p className="text-xs text-[var(--text-light)] flex items-center justify-center gap-1">
-              <ArrowRight className="w-3 h-3" />
-              右上の「Discordでログイン」ボタンからお進みください
-            </p>
           </div>
         </section>
       </main>
