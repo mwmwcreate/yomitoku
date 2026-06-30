@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
@@ -21,10 +21,30 @@ import {
   Smartphone,
   GraduationCap,
   ShieldCheck,
+  Save,
+  Plus,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 
-type Phase = "idle" | "analyzing" | "done";
+type Phase = "idle" | "analyzing";
+
+type Turn = {
+  question: string;
+  answer: string;
+  findings: Finding[];
+  checkWith: string;
+  notFound: boolean;
+  disclaimer: string;
+};
+
+type SavedMeta = {
+  id: string;
+  title: string;
+  docType: string;
+  turnCount: number;
+  updatedAt: string;
+};
 
 const MAX_DOC_CHARS = 12000;
 
@@ -41,19 +61,37 @@ export default function DocumentsPage() {
   const { status } = useSession();
   const router = useRouter();
 
+  const [savedList, setSavedList] = useState<SavedMeta[]>([]);
+  const [currentDocId, setCurrentDocId] = useState<string | null>(null);
+
   const [docTypeId, setDocTypeId] = useState("rent");
   const [document, setDocument] = useState("");
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
+
   const [phase, setPhase] = useState<Phase>("idle");
   const [statusMsg, setStatusMsg] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [findings, setFindings] = useState<Finding[]>([]);
-  const [checkWith, setCheckWith] = useState("");
-  const [notFound, setNotFound] = useState(false);
-  const [disclaimer, setDisclaimer] = useState("");
+  const [pendingFindings, setPendingFindings] = useState<Finding[]>([]);
+  const [pendingQuestion, setPendingQuestion] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const questionRef = useRef<HTMLInputElement>(null);
+  const threadEndRef = useRef<HTMLDivElement>(null);
+
+  const refreshList = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user-documents");
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.items) setSavedList(data.items);
+    } catch {
+      /* 一覧の取得失敗は致命的でないので無視 */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") refreshList();
+  }, [status, refreshList]);
 
   if (status === "loading") {
     return (
@@ -74,45 +112,76 @@ export default function DocumentsPage() {
   const isLoading = phase === "analyzing";
   const docOver = document.length > MAX_DOC_CHARS;
   const docType = getDocumentType(docTypeId);
+  const hasConversation = turns.length > 0;
 
   const pickQuestion = (q: string) => {
     setQuestion(q);
     requestAnimationFrame(() => questionRef.current?.focus());
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const saveDoc = async (nextTurns: Turn[], explicit = false) => {
+    // 既存（id あり）の場合は会話追記のたびに自動保存。新規は「保存」ボタン押下時のみ。
+    if (!currentDocId && !explicit) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/user-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: currentDocId ?? undefined,
+          docType: docTypeId,
+          content: document,
+          turns: nextTurns,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.id) {
+        if (!currentDocId) setCurrentDocId(data.id);
+        refreshList();
+      }
+    } catch {
+      /* 保存失敗は致命的でないので無視（会話は画面に残る） */
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!document.trim() || !question.trim() || isLoading) return;
 
+    const asked = question;
     setPhase("analyzing");
     setError("");
     setStatusMsg("文書を読み込んでいます…");
-    setAnswer("");
-    setFindings([]);
-    setCheckWith("");
-    setNotFound(false);
-    setDisclaimer("");
+    setPendingFindings([]);
+    setPendingQuestion(asked);
+    setQuestion("");
+    requestAnimationFrame(() => threadEndRef.current?.scrollIntoView({ behavior: "smooth" }));
 
     try {
       const res = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ document, question, docType: docTypeId }),
+        body: JSON.stringify({
+          document,
+          question: asked,
+          docType: docTypeId,
+          history: turns.map((t) => ({ question: t.question, answer: t.answer })),
+        }),
       });
 
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => null);
         const detail = data?.details || data?.error;
-        throw new Error(
-          detail
-            ? `読み取りに失敗しました (${res.status}): ${detail}`
-            : "読み取りに失敗しました。時間をおいて再度お試しください。",
-        );
+        throw new Error(detail ? `読み取りに失敗しました (${res.status}): ${detail}` : "読み取りに失敗しました。");
       }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
+      let liveFindings: Finding[] = [];
+      let finalTurn: Turn | null = null;
 
       const handleEvent = (ev: string, raw: string) => {
         let data: Record<string, unknown> = {};
@@ -123,38 +192,28 @@ export default function DocumentsPage() {
         }
         switch (ev) {
           case "finding":
-            setFindings((prev) => [...prev, data as unknown as Finding]);
+            liveFindings = [...liveFindings, data as unknown as Finding];
+            setPendingFindings(liveFindings);
             break;
           case "status":
             if (typeof data.message === "string") setStatusMsg(data.message);
             break;
           case "done": {
             const r = data.result as
-              | {
-                  answer?: string;
-                  findings?: Finding[];
-                  checkWith?: string;
-                  notFound?: boolean;
-                  disclaimer?: string;
-                }
+              | { answer?: string; findings?: Finding[]; checkWith?: string; notFound?: boolean; disclaimer?: string }
               | undefined;
-            if (r) {
-              setAnswer(r.answer ?? "");
-              if (Array.isArray(r.findings)) setFindings(r.findings);
-              setCheckWith(r.checkWith ?? "");
-              setNotFound(r.notFound === true);
-              setDisclaimer(r.disclaimer ?? "");
-            }
-            setPhase("done");
+            finalTurn = {
+              question: asked,
+              answer: r?.answer ?? "",
+              findings: Array.isArray(r?.findings) ? (r!.findings as Finding[]) : liveFindings,
+              checkWith: r?.checkWith ?? "",
+              notFound: r?.notFound === true,
+              disclaimer: r?.disclaimer ?? "",
+            };
             break;
           }
           case "error":
-            setError(
-              typeof data.message === "string"
-                ? `読み取りに失敗しました: ${data.message}`
-                : "読み取りに失敗しました。",
-            );
-            setPhase("idle");
+            setError(typeof data.message === "string" ? `読み取りに失敗しました: ${data.message}` : "読み取りに失敗しました。");
             break;
         }
       };
@@ -177,209 +236,355 @@ export default function DocumentsPage() {
         }
       }
 
-      setPhase((p) => (p === "analyzing" ? "done" : p));
+      if (finalTurn) {
+        const nextTurns = [...turns, finalTurn];
+        setTurns(nextTurns);
+        saveDoc(nextTurns); // 既に保存済みの文書なら自動保存
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "読み取りに失敗しました。");
+    } finally {
       setPhase("idle");
+      setPendingQuestion("");
+      setPendingFindings([]);
     }
   };
 
-  const showResults = findings.length > 0 || phase === "done";
+  const handleNew = () => {
+    setCurrentDocId(null);
+    setDocument("");
+    setTurns([]);
+    setQuestion("");
+    setError("");
+    setDocTypeId("rent");
+  };
+
+  const handleOpen = async (id: string) => {
+    if (isLoading) return;
+    try {
+      const res = await fetch(`/api/user-documents/${id}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) return;
+      setCurrentDocId(data.id);
+      setDocTypeId(typeof data.docType === "string" ? data.docType : "other");
+      setDocument(typeof data.content === "string" ? data.content : "");
+      setTurns(Array.isArray(data.turns) ? data.turns : []);
+      setQuestion("");
+      setError("");
+    } catch {
+      /* 読み込み失敗は無視 */
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("この文書と会話を削除しますか？")) return;
+    try {
+      await fetch(`/api/user-documents/${id}`, { method: "DELETE" });
+      if (currentDocId === id) handleNew();
+      refreshList();
+    } catch {
+      /* 削除失敗は無視 */
+    }
+  };
+
+  const latestDisclaimer = turns.length ? turns[turns.length - 1].disclaimer : "";
 
   return (
     <div className="min-h-screen bg-[var(--primary-lighter)]">
       <Header />
-      <main className="max-w-3xl mx-auto px-6 md:px-10 py-12 md:py-16">
+      <main className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-16">
         <div className="mb-8 animate-fade-in-up">
           <ModeSwitch />
         </div>
 
-        <div className="mb-8 animate-fade-in-up">
-          <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2 flex items-center gap-2.5">
-            <FileText className="w-6 h-6 text-[var(--primary)]" />
-            規約・契約から調べる
-          </h1>
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            賃貸契約・就業規則・利用規約・校則などの文書を貼り付けて質問すると、AIが該当箇所を引用しながら中立に整理します。違法・合法やOK/ダメの判断はしません。
-          </p>
-        </div>
-
-        {/* 免責（このモード用に文言を調整） */}
-        <div className="mb-8 bg-[var(--amber-bg)] border border-[var(--amber-border)]/30 px-6 py-4 rounded-2xl animate-fade-in-up delay-100">
-          <p className="text-[13px] text-[var(--amber-text-light)] leading-relaxed">
-            これは<strong>文書に書かれている内容を整理する参考情報</strong>です。最終的な可否や法的な判断ではありません。貼り付けた文書はサーバーに保存されません。
-          </p>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl border border-[var(--border)] p-7 md:p-9 mb-10 animate-fade-in-up delay-200 space-y-6"
-        >
-          {/* 文書の種類 */}
-          <div>
-            <label className="text-base font-bold text-[var(--foreground)] block mb-2.5">① 文書の種類</label>
-            <div className="flex flex-wrap gap-2">
-              {DOCUMENT_TYPES.map((t) => {
-                const Icon = TYPE_ICONS[t.id] ?? FileText;
-                const active = t.id === docTypeId;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setDocTypeId(t.id)}
-                    disabled={isLoading}
-                    className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-2 border transition-colors duration-300 disabled:opacity-40 ${
-                      active
-                        ? "bg-[var(--primary)] text-white border-[var(--primary)]"
-                        : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--primary-lighter)] hover:text-[var(--primary-dark)]"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 文書 */}
-          <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <label className="text-base font-bold text-[var(--foreground)]">② 文書を貼り付け</label>
-              <span className={`text-[11px] tabular-nums ${docOver ? "text-red-500" : "text-[var(--text-light)]"}`}>
-                {document.length.toLocaleString()} / {MAX_DOC_CHARS.toLocaleString()}字
-              </span>
-            </div>
-            <textarea
-              className="w-full h-48 p-5 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
-              placeholder={docType.placeholder}
-              value={document}
-              onChange={(e) => setDocument(e.target.value)}
-              disabled={isLoading}
-            />
-            {docOver && (
-              <p className="text-[11px] text-red-500 mt-1.5">
-                長いため、分析では先頭{MAX_DOC_CHARS.toLocaleString()}字のみ読み込まれます。該当しそうな部分に絞って貼ると精度が上がります。
-              </p>
-            )}
-          </div>
-
-          {/* 質問 */}
-          <div>
-            <label className="text-base font-bold text-[var(--foreground)] block mb-2.5">③ 聞きたいこと</label>
-            <input
-              ref={questionRef}
-              type="text"
-              className="w-full p-4 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm transition-all duration-300"
-              placeholder={`例: ${docType.starters[0]}`}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              disabled={isLoading}
-            />
-            <div className="mt-3">
-              <p className="text-xs text-[var(--text-muted)] mb-2 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[var(--primary)]" />
-                よくある質問から
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {docType.starters.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => pickQuestion(q)}
-                    disabled={isLoading}
-                    className="text-xs text-[var(--text-muted)] bg-[var(--primary-lighter)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-3.5 py-2 transition-colors duration-300 disabled:opacity-40"
-                  >
-                    {q}
-                  </button>
-                ))}
+        <div className="flex flex-col lg:flex-row lg:gap-8 lg:items-start">
+          {/* マイ文書 */}
+          <aside className="order-2 lg:order-1 mt-10 lg:mt-0 w-full lg:w-[260px] lg:shrink-0">
+            <div className="bg-white rounded-2xl border border-[var(--border)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-bold text-[var(--foreground)]">マイ文書</h2>
+                <button
+                  onClick={handleNew}
+                  className="flex items-center gap-1 text-xs text-[var(--primary)] hover:text-[var(--primary-dark)] font-medium transition-colors duration-300"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  新規
+                </button>
               </div>
+              {savedList.length === 0 ? (
+                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                  保存した文書はここに並びます。文書を貼って質問し、「保存」すると次回そのまま続きを聞けます。
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {savedList.map((s) => {
+                    const Icon = TYPE_ICONS[s.docType] ?? FileText;
+                    const active = s.id === currentDocId;
+                    return (
+                      <li key={s.id}>
+                        <div
+                          className={`group flex items-start gap-2 rounded-xl px-3 py-2.5 transition-colors duration-300 ${
+                            active ? "bg-[var(--primary-light)]" : "hover:bg-[var(--primary-lighter)]"
+                          }`}
+                        >
+                          <button onClick={() => handleOpen(s.id)} className="flex-1 min-w-0 text-left">
+                            <span className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--foreground)]">
+                              <Icon className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
+                              <span className="truncate">{s.title}</span>
+                            </span>
+                            <span className="block text-[10px] text-[var(--text-light)] mt-0.5 pl-5">
+                              {getDocumentType(s.docType).label}・{s.turnCount}件の質問
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(s.id)}
+                            aria-label="削除"
+                            className="opacity-0 group-hover:opacity-100 text-[var(--text-light)] hover:text-red-500 transition-all duration-300 shrink-0 mt-0.5"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
-          </div>
+          </aside>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isLoading || !document.trim() || !question.trim()}
-              className="flex items-center gap-2.5 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-7 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-[var(--primary)]/15 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {isLoading ? "読み取り中..." : "文書から調べる"}
-            </button>
-          </div>
-          {error && <p className="text-red-500 text-sm p-4 bg-red-50 rounded-xl">{error}</p>}
-        </form>
-
-        {isLoading && findings.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--primary-light)] flex items-center justify-center">
-              <FileText className="w-7 h-7 text-[var(--primary)] animate-pulse" />
+          {/* メイン */}
+          <div className="order-1 lg:order-2 lg:flex-1 lg:min-w-0">
+            <div className="mb-6 animate-fade-in-up">
+              <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2 flex items-center gap-2.5">
+                <FileText className="w-6 h-6 text-[var(--primary)]" />
+                規約・契約から調べる
+              </h1>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                文書を貼り付けて質問すると、AIが該当箇所を引用しながら中立に整理します。続けて質問でき、保存すれば次回そのまま続けられます。
+              </p>
             </div>
-            <p className="mt-6 text-sm text-[var(--text-muted)]">{statusMsg}</p>
-            <p className="mt-1 text-xs text-[var(--text-light)]">該当箇所が見つかり次第、順に表示します</p>
-          </div>
-        )}
 
-        {showResults && (
-          <div className="space-y-6">
-            {/* ざっくり結論 */}
-            {phase === "done" && answer && (
-              <div className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 animate-fade-in-up">
-                <h2 className="text-xs font-bold text-[var(--text-light)] tracking-widest uppercase mb-2.5 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />
-                  ざっくり言うと
-                </h2>
-                <p className="text-sm text-[var(--foreground)] leading-[1.9]">{answer}</p>
+            <div className="mb-6 bg-[var(--amber-bg)] border border-[var(--amber-border)]/30 px-5 py-3.5 rounded-2xl animate-fade-in-up delay-100">
+              <p className="text-[12px] text-[var(--amber-text-light)] leading-relaxed">
+                これは<strong>文書の記載を整理する参考情報</strong>です。最終的な可否や法的な判断ではありません。保存した文書は<strong>あなただけ</strong>が見られます。
+              </p>
+            </div>
+
+            {/* 文書パネル */}
+            <div className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 mb-6 animate-fade-in-up delay-200 space-y-5">
+              <div>
+                <label className="text-sm font-bold text-[var(--foreground)] block mb-2.5">文書の種類</label>
+                <div className="flex flex-wrap gap-2">
+                  {DOCUMENT_TYPES.map((t) => {
+                    const Icon = TYPE_ICONS[t.id] ?? FileText;
+                    const active = t.id === docTypeId;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setDocTypeId(t.id)}
+                        disabled={isLoading}
+                        className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-2 border transition-colors duration-300 disabled:opacity-40 ${
+                          active
+                            ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                            : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--primary-lighter)] hover:text-[var(--primary-dark)]"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            )}
 
-            {findings.length > 0 ? (
-              <>
-                <h2 className="text-lg font-bold text-[var(--foreground)] flex items-center gap-2 animate-fade-in-up">
-                  文書の該当箇所
-                  {isLoading && <Loader2 className="w-4 h-4 text-[var(--primary)] animate-spin" />}
-                </h2>
-                <div className="grid gap-6">
-                  {findings.map((f, idx) => (
-                    <ClauseCard key={idx} finding={f} index={idx} />
-                  ))}
+              <div>
+                <div className="flex items-center justify-between mb-2.5">
+                  <label className="text-sm font-bold text-[var(--foreground)]">文書を貼り付け</label>
+                  <span className={`text-[11px] tabular-nums ${docOver ? "text-red-500" : "text-[var(--text-light)]"}`}>
+                    {document.length.toLocaleString()} / {MAX_DOC_CHARS.toLocaleString()}字
+                  </span>
                 </div>
-              </>
-            ) : (
-              phase === "done" &&
-              notFound && (
-                <div className="bg-white rounded-2xl border border-[var(--border)] p-10 text-center animate-fade-in-up">
-                  <div className="w-14 h-14 rounded-2xl bg-[var(--primary-light)] flex items-center justify-center mx-auto mb-5">
-                    <SearchX className="w-6 h-6 text-[var(--primary)]" />
-                  </div>
-                  <p className="text-sm text-[var(--text-muted)]">この文書には、その質問に関する明確な記載が見当たりませんでした。</p>
-                  <p className="text-xs text-[var(--text-light)] mt-2">別の言い方で質問するか、関連しそうな章を貼り直してみてください。</p>
-                </div>
-              )
-            )}
+                <textarea
+                  className="w-full h-40 p-5 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
+                  placeholder={docType.placeholder}
+                  value={document}
+                  onChange={(e) => setDocument(e.target.value)}
+                  disabled={isLoading}
+                />
+                {docOver && (
+                  <p className="text-[11px] text-red-500 mt-1.5">
+                    長いため、分析では先頭{MAX_DOC_CHARS.toLocaleString()}字のみ読み込まれます。該当しそうな部分に絞ると精度が上がります。
+                  </p>
+                )}
+              </div>
 
-            {phase === "done" && checkWith && (
-              <div className="bg-[#f6fefb] rounded-2xl border border-[#059669]/20 p-5 flex items-start gap-3 animate-fade-in-up">
-                <span className="w-9 h-9 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-                  <PhoneCall className="w-4 h-4 text-[#059669]" />
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  {currentDocId ? (saving ? "自動保存中…" : "保存済み（質問のたびに自動保存）") : "未保存"}
                 </span>
-                <div>
-                  <p className="text-xs font-bold text-[var(--foreground)]">最終確認はこちらへ</p>
-                  <p className="text-sm text-[var(--text-muted)] mt-1 leading-relaxed">{checkWith}</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => saveDoc(turns, true)}
+                  disabled={!document.trim() || saving}
+                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-4 py-2 transition-colors duration-300 disabled:opacity-40"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {currentDocId ? "更新を保存" : "この文書を保存"}
+                </button>
+              </div>
+            </div>
+
+            {/* 会話スレッド */}
+            {(hasConversation || isLoading) && (
+              <div className="space-y-6 mb-6">
+                {turns.map((t, i) => (
+                  <TurnView key={i} turn={t} />
+                ))}
+
+                {isLoading && (
+                  <div className="space-y-4">
+                    <QuestionBubble text={pendingQuestion} />
+                    {pendingFindings.length > 0 ? (
+                      <div className="grid gap-4">
+                        {pendingFindings.map((f, idx) => (
+                          <ClauseCard key={idx} finding={f} index={idx} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 py-4 text-sm text-[var(--text-muted)]">
+                        <Loader2 className="w-4 h-4 animate-spin text-[var(--primary)]" />
+                        {statusMsg}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div ref={threadEndRef} />
               </div>
             )}
 
-            {phase === "done" && <ConsultationLinks />}
+            {/* 質問入力 */}
+            <form
+              onSubmit={handleAsk}
+              className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 mb-10 animate-fade-in-up"
+            >
+              <label className="text-sm font-bold text-[var(--foreground)] block mb-2.5">
+                {hasConversation ? "続けて質問する" : "聞きたいこと"}
+              </label>
+              <div className="flex gap-2.5">
+                <input
+                  ref={questionRef}
+                  type="text"
+                  className="flex-1 p-4 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm transition-all duration-300"
+                  placeholder={`例: ${docType.starters[0]}`}
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  disabled={isLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !document.trim() || !question.trim()}
+                  className="flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-5 rounded-xl text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              </div>
 
-            {phase === "done" && disclaimer && (
-              <div className="bg-white p-6 rounded-2xl text-[13px] text-[var(--text-muted)] border border-[var(--border)] leading-relaxed animate-fade-in-up">
-                {disclaimer}
+              {!hasConversation && (
+                <div className="mt-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    よくある質問から
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {docType.starters.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => pickQuestion(q)}
+                        disabled={isLoading}
+                        className="text-xs text-[var(--text-muted)] bg-[var(--primary-lighter)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-3.5 py-2 transition-colors duration-300 disabled:opacity-40"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {error && <p className="text-red-500 text-sm mt-4 p-4 bg-red-50 rounded-xl">{error}</p>}
+            </form>
+
+            {hasConversation && (
+              <div className="space-y-6">
+                <ConsultationLinks />
+                {latestDisclaimer && (
+                  <div className="bg-white p-6 rounded-2xl text-[13px] text-[var(--text-muted)] border border-[var(--border)] leading-relaxed">
+                    {latestDisclaimer}
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
       </main>
+    </div>
+  );
+}
+
+function QuestionBubble({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="w-7 h-7 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
+        Q
+      </span>
+      <p className="flex-1 text-sm font-medium text-[var(--foreground)] bg-white rounded-2xl border border-[var(--border)] px-4 py-3 leading-relaxed">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function TurnView({ turn }: { turn: Turn }) {
+  return (
+    <div className="space-y-4 animate-fade-in-up">
+      <QuestionBubble text={turn.question} />
+
+      {turn.answer && (
+        <div className="bg-white rounded-2xl border border-[var(--border)] p-5 md:p-6">
+          <h3 className="text-xs font-bold text-[var(--text-light)] tracking-widest uppercase mb-2.5 flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />
+            ざっくり言うと
+          </h3>
+          <p className="text-sm text-[var(--foreground)] leading-[1.9]">{turn.answer}</p>
+        </div>
+      )}
+
+      {turn.findings.length > 0 ? (
+        <div className="grid gap-4">
+          {turn.findings.map((f, idx) => (
+            <ClauseCard key={idx} finding={f} index={idx} />
+          ))}
+        </div>
+      ) : (
+        turn.notFound && (
+          <div className="bg-white rounded-2xl border border-[var(--border)] p-6 flex items-center gap-3">
+            <SearchX className="w-5 h-5 text-[var(--text-light)] shrink-0" />
+            <p className="text-sm text-[var(--text-muted)]">この文書には、その質問に関する明確な記載が見当たりませんでした。</p>
+          </div>
+        )
+      )}
+
+      {turn.checkWith && (
+        <div className="bg-[#f6fefb] rounded-2xl border border-[#059669]/20 p-4 flex items-start gap-3">
+          <span className="w-8 h-8 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
+            <PhoneCall className="w-4 h-4 text-[#059669]" />
+          </span>
+          <div>
+            <p className="text-xs font-bold text-[var(--foreground)]">最終確認はこちらへ</p>
+            <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">{turn.checkWith}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

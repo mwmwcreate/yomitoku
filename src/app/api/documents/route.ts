@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { document?: unknown; question?: unknown; docType?: unknown };
+  let body: { document?: unknown; question?: unknown; docType?: unknown; history?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -36,6 +36,20 @@ export async function POST(req: Request) {
   const document = typeof body.document === 'string' ? body.document : '';
   const question = typeof body.question === 'string' ? body.question : '';
   const docType = getDocumentType(body.docType);
+
+  // マルチターン: これまでのやりとり（直近のみ）を文脈として渡す。
+  const history = Array.isArray((body as { history?: unknown }).history)
+    ? ((body as { history: unknown[] }).history
+        .map((h) => {
+          const o = (h ?? {}) as Record<string, unknown>;
+          return {
+            question: typeof o.question === 'string' ? o.question.slice(0, 500) : '',
+            answer: typeof o.answer === 'string' ? o.answer.slice(0, 1000) : '',
+          };
+        })
+        .filter((h) => h.question && h.answer)
+        .slice(-6))
+    : [];
 
   if (!document.trim()) {
     return NextResponse.json({ error: '文書が入力されていません' }, { status: 400 });
@@ -104,10 +118,16 @@ ${typeHint}
           });
         }
 
+        const historyText = history.length
+          ? `# これまでのやりとり\n${history
+              .map((h, i) => `Q${i + 1}: ${h.question}\nA${i + 1}: ${h.answer}`)
+              .join('\n\n')}\n\n`
+          : '';
+
         const aiStream = await openai.responses.create({
           model: 'gpt-5.4-nano',
           instructions,
-          input: `# 文書\n${doc}\n\n# 質問\n${q}\n\n出力は指定したJSONオブジェクトのみ。前置きやコードフェンス(\`\`\`)は含めないこと。`,
+          input: `# 文書\n${doc}\n\n${historyText}# 今回の質問\n${q}\n\n上の文書だけを根拠に、今回の質問へ答えてください。出力は指定したJSONオブジェクトのみ。前置きやコードフェンス(\`\`\`)は含めないこと。`,
           temperature: 0.1,
           stream: true,
         });
