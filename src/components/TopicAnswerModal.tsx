@@ -73,10 +73,10 @@ export default function TopicAnswerModal({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative bg-[var(--primary-lighter)] w-full max-w-3xl max-h-[85vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
-        <div className="flex items-start gap-3 px-6 md:px-8 py-5 bg-white border-b border-[var(--border)] shrink-0">
-          <span className="w-9 h-9 rounded-xl bg-[var(--primary-light)] flex items-center justify-center shrink-0 mt-0.5">
-            <MessageCircleQuestion className="w-4 h-4 text-[var(--primary)]" />
+      <div className="relative bg-[var(--background)] w-full max-w-3xl max-h-[85vh] rounded-[24px] overflow-hidden flex flex-col animate-fade-in-up">
+        <div className="flex items-start gap-3 px-6 md:px-8 py-5 bg-[var(--surface)] shrink-0">
+          <span className="w-9 h-9 rounded-xl bg-[var(--soft-blue)] flex items-center justify-center shrink-0 mt-0.5">
+            <MessageCircleQuestion className="w-4 h-4 text-[var(--deep-blue)]" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] text-[var(--text-muted)]">みんなの相談テーマ — AIの回答例</p>
@@ -87,7 +87,7 @@ export default function TopicAnswerModal({
           <button
             onClick={onClose}
             aria-label="閉じる"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--border-light)] transition-colors duration-300 shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--pale-gray)] transition-colors duration-300 shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -127,14 +127,14 @@ export default function TopicAnswerModal({
               </section>
 
               {answer.precedents.length > 0 && (
-                <section className="px-5 md:px-6 py-6 bg-[#fbf7ec] rounded-3xl border border-[#ede2c4]/60">
+                <section className="px-5 md:px-6 py-6 bg-[var(--pale-gray)] rounded-[24px]">
                   <div className="flex items-center gap-3 mb-5">
-                    <span className="w-9 h-9 rounded-xl bg-white flex items-center justify-center ring-1 ring-[#ede2c4] shadow-sm">
-                      <Gavel className="w-4 h-4 text-[#8b6f30]" />
+                    <span className="w-9 h-9 rounded-xl bg-[var(--surface)] flex items-center justify-center">
+                      <Gavel className="w-4 h-4 text-[var(--deep-blue)]" />
                     </span>
                     <div>
-                      <h3 className="text-sm font-bold text-[var(--foreground)]">類似する過去の判例</h3>
-                      <p className="text-[11px] text-[#8b6f30]/70 mt-0.5">Web検索で取得した実在の裁判例(出典URL付き)</p>
+                      <h3 className="text-sm font-bold text-[var(--text)]">類似する過去の判例</h3>
+                      <p className="text-[11px] text-[var(--muted)] mt-0.5">Web検索で取得した実在の裁判例(出典URL付き)</p>
                     </div>
                   </div>
                   <div className="grid gap-4">
@@ -146,7 +146,7 @@ export default function TopicAnswerModal({
               )}
 
               {answer.disclaimer && (
-                <p className="bg-white p-5 rounded-2xl text-[12px] text-[var(--text-muted)] border border-[var(--border)] leading-relaxed">
+                <p className="bg-[var(--pale-gray)] p-5 rounded-2xl text-[12px] text-[var(--muted)] leading-relaxed">
                   {answer.disclaimer}
                 </p>
               )}
@@ -155,10 +155,10 @@ export default function TopicAnswerModal({
         </div>
 
         {onUse && (
-          <div className="px-6 md:px-8 py-4 bg-white border-t border-[var(--border)] shrink-0">
+          <div className="px-6 md:px-8 py-4 bg-[var(--surface)] shrink-0">
             <button
               onClick={onUse}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-[var(--primary)]/15 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--deep-blue)] hover:bg-[var(--deep-blue-dark)] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-colors duration-300 active:scale-[0.98]"
             >
               <PencilLine className="w-4 h-4" />
               この相談を自分でも調べてみる

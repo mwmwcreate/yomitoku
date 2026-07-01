@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-6 h-6 text-[var(--primary)] animate-spin" />
           <span className="text-sm text-[var(--text-muted)]">読み込み中...</span>
@@ -204,13 +204,13 @@ export default function Dashboard() {
             </div>
             <div
               ref={inputCardRef}
-              className="bg-white rounded-2xl border border-[var(--border)] p-7 md:p-9 mb-10 animate-fade-in-up delay-200 scroll-mt-24"
+              className="bg-[var(--surface)] rounded-[20px] p-7 md:p-9 mb-10 animate-fade-in-up delay-200 scroll-mt-24"
             >
               <h2 className="text-base font-bold mb-5 text-[var(--foreground)]">状況を入力</h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <textarea
                   ref={textareaRef}
-                  className="w-full h-36 p-5 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
+                  className="w-full h-36 p-5 rounded-xl bg-[var(--surface)] border border-[var(--hairline)] focus:border-[var(--deep-blue)] focus:bg-[var(--soft-blue)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
                   placeholder="例: 友達から借りたゲームソフトを、別の友達に貸してお金をもらった。これって大丈夫？"
                   value={situation}
                   onChange={(e) => setSituation(e.target.value)}
@@ -230,7 +230,7 @@ export default function Dashboard() {
                           key={ex}
                           type="button"
                           onClick={() => focusInput(ex)}
-                          className="text-left text-xs text-[var(--text-muted)] bg-[var(--primary-lighter)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-3.5 py-2 leading-snug transition-colors duration-300"
+                          className="text-left text-xs text-[var(--text-muted)] bg-[var(--pale-gray)] hover:bg-[var(--soft-blue)] hover:text-[var(--deep-blue)] rounded-full px-3.5 py-2 leading-snug transition-colors duration-300"
                         >
                           {ex}
                         </button>
@@ -240,7 +240,7 @@ export default function Dashboard() {
                 )}
 
                 <div className="flex justify-end">
-                  <button type="submit" disabled={isLoading || !situation.trim()} className="flex items-center gap-2.5 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-7 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-[var(--primary)]/15 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]">
+                  <button type="submit" disabled={isLoading || !situation.trim()} className="flex items-center gap-2.5 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-7 py-2.5 rounded-full text-sm font-medium transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]">
                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     {isLoading ? "分析中..." : "分析する"}
                   </button>
@@ -279,29 +279,29 @@ export default function Dashboard() {
                 )}
 
                 {showPrecedentSection && (
-                  <section className="relative mt-12 px-6 md:px-8 py-10 md:py-12 bg-[#fbf7ec] rounded-3xl border border-[#ede2c4]/60 animate-fade-in-up">
-                    <div className="flex items-center gap-3.5 mb-8">
-                      <span className="w-11 h-11 rounded-xl bg-white flex items-center justify-center ring-1 ring-[#ede2c4] shadow-sm">
-                        <Gavel className="w-5 h-5 text-[#8b6f30]" />
+                  <section className="mt-10 px-6 md:px-8 py-9 md:py-10 bg-[var(--pale-gray)] rounded-[24px] animate-fade-in-up">
+                    <div className="flex items-center gap-3 mb-7">
+                      <span className="w-11 h-11 rounded-2xl bg-[var(--surface)] flex items-center justify-center">
+                        <Gavel className="w-5 h-5 text-[var(--deep-blue)]" />
                       </span>
                       <div>
-                        <h2 className="text-lg font-bold text-[var(--foreground)]">類似する過去の判例</h2>
-                        <p className="text-xs text-[#8b6f30]/70 mt-0.5">Web検索で取得した実在の裁判例(出典URL付き)</p>
+                        <h2 className="text-lg font-bold text-[var(--text)]">類似する過去の判例</h2>
+                        <p className="text-xs text-[var(--muted)] mt-0.5">Web検索で取得した実在の裁判例(出典URL付き)</p>
                       </div>
                     </div>
                     {precedents.length > 0 ? (
-                      <div className="grid gap-6">
+                      <div className="grid gap-4">
                         {precedents.map((p, idx) => (<PrecedentCard key={idx} precedent={p} index={idx} />))}
                       </div>
                     ) : isLoading ? (
-                      <div className="flex items-center justify-center gap-2 py-6 text-sm text-[#8b6f30]/80">
+                      <div className="flex items-center justify-center gap-2 py-6 text-sm text-[var(--muted)]">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         {statusMsg}
                       </div>
                     ) : (
-                      <div className="bg-white/70 rounded-2xl border border-[#ede2c4]/60 p-8 text-center">
-                        <p className="text-sm text-[var(--text-muted)]">今回の状況に類似する判例は見つかりませんでした。</p>
-                        <p className="text-xs text-[var(--text-light)] mt-2">Web検索で実在の判例が確認できなかったため、判例の提示は行いません。</p>
+                      <div className="bg-[var(--surface)] rounded-2xl p-8 text-center">
+                        <p className="text-sm text-[var(--muted)]">今回の状況に類似する判例は見つかりませんでした。</p>
+                        <p className="text-xs text-[var(--muted-light)] mt-2">Web検索で実在の判例が確認できなかったため、判例の提示は行いません。</p>
                       </div>
                     )}
                   </section>
@@ -310,7 +310,7 @@ export default function Dashboard() {
                 {phase === "done" && (
                   <>
                     {/* フォローアップ：結果を見たあとの「で、どうすれば？」に応える */}
-                    <section className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 animate-fade-in-up">
+                    <section className="bg-[var(--surface)] rounded-[20px] p-6 md:p-7 animate-fade-in-up">
                       <h3 className="text-sm font-bold text-[var(--foreground)] mb-1 flex items-center gap-2">
                         <MessageCirclePlus className="w-4 h-4 text-[var(--primary)]" />
                         さらに深掘りして聞く
@@ -322,7 +322,7 @@ export default function Dashboard() {
                             key={q}
                             type="button"
                             onClick={() => appendFollowUp(q)}
-                            className="text-xs text-[var(--text-muted)] bg-[var(--primary-lighter)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-3.5 py-2 transition-colors duration-300"
+                            className="text-xs text-[var(--text-muted)] bg-[var(--pale-gray)] hover:bg-[var(--soft-blue)] hover:text-[var(--deep-blue)] rounded-full px-3.5 py-2 transition-colors duration-300"
                           >
                             {q}
                           </button>
@@ -333,7 +333,7 @@ export default function Dashboard() {
                     <ConsultationLinks />
 
                     {disclaimer && (
-                      <div className="bg-white p-6 rounded-2xl text-[13px] text-[var(--text-muted)] border border-[var(--border)] mt-2 leading-relaxed animate-fade-in-up">
+                      <div className="bg-[var(--surface)] p-6 rounded-[20px] text-[13px] text-[var(--muted)] mt-2 leading-relaxed animate-fade-in-up">
                         {disclaimer}
                       </div>
                     )}

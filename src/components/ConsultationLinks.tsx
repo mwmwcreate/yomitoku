@@ -37,14 +37,14 @@ const RESOURCES: Resource[] = [
 
 export default function ConsultationLinks() {
   return (
-    <section className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 animate-fade-in-up">
+    <section className="bg-[var(--surface)] rounded-[20px] p-6 md:p-7 animate-fade-in-up">
       <div className="flex items-center gap-2.5 mb-5">
-        <span className="w-9 h-9 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-          <LifeBuoy className="w-4 h-4 text-[#059669]" />
+        <span className="w-9 h-9 rounded-xl bg-[var(--soft-blue)] flex items-center justify-center shrink-0">
+          <LifeBuoy className="w-4 h-4 text-[var(--deep-blue)]" />
         </span>
         <div>
-          <h3 className="text-sm font-bold text-[var(--foreground)]">困っているときの相談先</h3>
-          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">公的な無料・低額の相談窓口です</p>
+          <h3 className="text-sm font-bold text-[var(--text)]">困っているときの相談先</h3>
+          <p className="text-[11px] text-[var(--muted)] mt-0.5">公的な無料・低額の相談窓口です</p>
         </div>
       </div>
 
@@ -55,14 +55,14 @@ export default function ConsultationLinks() {
               href={r.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group block h-full rounded-xl border border-[var(--border)] hover:border-[#059669]/40 hover:bg-[#f6fefb] p-4 transition-colors duration-300"
+              className="group block h-full rounded-2xl bg-[var(--pale-gray)] hover:bg-[var(--pale-gray-hover)] p-4 transition-colors duration-300"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-bold text-[var(--foreground)] leading-snug">{r.name}</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[var(--text-light)] shrink-0 mt-0.5 group-hover:text-[#059669] transition-colors duration-300" />
+                <span className="text-sm font-bold text-[var(--text)] leading-snug">{r.name}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[var(--muted-light)] shrink-0 mt-0.5 group-hover:text-[var(--deep-blue)] transition-colors duration-300" />
               </div>
-              <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">{r.desc}</p>
-              <p className="text-xs font-medium text-[#059669] mt-2 flex items-center gap-1.5">
+              <p className="text-xs text-[var(--muted)] mt-1.5 leading-relaxed">{r.desc}</p>
+              <p className="text-xs font-medium text-[var(--deep-blue)] mt-2 flex items-center gap-1.5">
                 <Phone className="w-3 h-3" />
                 {r.contact}
               </p>

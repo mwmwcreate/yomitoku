@@ -9,37 +9,34 @@ export type Finding = {
 export default function ClauseCard({ finding, index = 0 }: { finding: Finding; index?: number }) {
   return (
     <div
-      className="relative bg-white rounded-2xl overflow-hidden border-l-[5px] border-l-[var(--primary)] border-y border-r border-[var(--border)] hover:shadow-[var(--card-shadow-hover)] transition-all duration-500 animate-fade-in-up"
-      style={{ animationDelay: `${index * 0.1}s` }}
+      className="bg-[var(--surface)] rounded-[20px] p-6 md:p-7 animate-fade-in-up"
+      style={{ animationDelay: `${index * 0.08}s` }}
     >
-      {/* Header: 該当条項（原文引用） */}
-      <div className="px-7 py-5 border-b border-[var(--border-light)] bg-[var(--primary-lighter)]">
-        <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-lg bg-[var(--primary-light)] flex items-center justify-center shrink-0">
-            <FileText className="w-4 h-4 text-[var(--primary)]" />
+      <div className="flex items-center gap-2">
+        <span className="w-8 h-8 rounded-xl bg-[var(--soft-blue)] flex items-center justify-center shrink-0">
+          <FileText className="w-4 h-4 text-[var(--deep-blue)]" />
+        </span>
+        <h3 className="text-xs font-bold text-[var(--muted)]">文書の該当箇所</h3>
+        {finding.location && (
+          <span className="ml-auto text-[11px] font-bold text-[var(--deep-blue)] bg-[var(--soft-blue)] rounded-full px-3 py-1">
+            {finding.location}
           </span>
-          <h3 className="text-xs font-bold text-[var(--text-light)] tracking-widest uppercase">
-            文書の該当箇所
-          </h3>
-          {finding.location && (
-            <span className="ml-auto text-[11px] font-bold text-[var(--primary)] bg-[var(--primary-light)] rounded-full px-2.5 py-1">
-              {finding.location}
-            </span>
-          )}
-        </div>
-        <blockquote className="relative mt-3 pl-7 text-sm text-[var(--foreground)] leading-[1.9]">
-          <Quote className="absolute left-0 top-0.5 w-4 h-4 text-[var(--primary)]/40" strokeWidth={2.5} />
+        )}
+      </div>
+
+      <div className="mt-4 bg-[var(--pale-blue)] rounded-2xl px-5 py-4">
+        <blockquote className="relative pl-6 text-sm text-[var(--text)] leading-[1.9]">
+          <Quote className="absolute left-0 top-1 w-3.5 h-3.5 text-[var(--deep-blue)]" strokeWidth={2.5} />
           {finding.quote}
         </blockquote>
       </div>
 
-      {/* Body: 読み方（中立・非断定） */}
-      <div className="px-7 py-6">
-        <h4 className="text-xs font-bold text-[var(--text-light)] tracking-widest uppercase mb-2.5 flex items-center gap-1.5">
-          <Info className="w-3.5 h-3.5 text-[var(--primary)]" />
+      <div className="mt-4">
+        <h4 className="text-xs font-bold text-[var(--muted)] mb-2 flex items-center gap-1.5">
+          <Info className="w-3.5 h-3.5 text-[var(--deep-blue)]" />
           この箇所の読み方
         </h4>
-        <p className="text-sm text-[var(--foreground)] leading-[1.9]">{finding.explanation}</p>
+        <p className="text-sm text-[var(--text)] leading-[1.9]">{finding.explanation}</p>
       </div>
     </div>
   );

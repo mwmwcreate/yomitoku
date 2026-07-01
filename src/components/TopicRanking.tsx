@@ -54,7 +54,7 @@ export default function TopicRanking({
   }, [refreshKey]);
 
   return (
-    <aside className={`bg-white rounded-2xl border border-[var(--border)] p-5 md:p-6 ${className}`}>
+    <aside className={`bg-[var(--surface)] rounded-[20px] p-5 md:p-6 ${className}`}>
       <div className="flex items-center gap-2.5 mb-5">
         <span className="w-9 h-9 rounded-xl bg-[var(--primary-light)] flex items-center justify-center shrink-0">
           <TrendingUp className="w-4 h-4 text-[var(--primary)]" />
@@ -104,7 +104,7 @@ export default function TopicRanking({
                     <li key={ex.id}>
                       <button
                         onClick={() => setSelected(ex)}
-                        className="w-full text-left text-xs text-[var(--text-muted)] flex items-start gap-1.5 leading-relaxed rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-[var(--primary-lighter)] hover:text-[var(--primary-dark)] transition-colors duration-300 cursor-pointer"
+                        className="w-full text-left text-xs text-[var(--text-muted)] flex items-start gap-1.5 leading-relaxed rounded-lg px-2 py-1.5 -mx-2 hover:bg-[var(--pale-gray)] hover:text-[var(--deep-blue)] transition-colors duration-300 cursor-pointer"
                       >
                         <span className="text-[var(--text-light)] shrink-0 mt-0.5">・</span>
                         <span className="flex-1">
@@ -130,7 +130,7 @@ export default function TopicRanking({
               )}
             </div>
           ))}
-          <p className="text-[10px] text-[var(--text-light)] pt-3 border-t border-[var(--border-light)] leading-relaxed">
+          <p className="text-[10px] text-[var(--text-light)] pt-3 leading-relaxed">
             相談例をクリックすると、そのときのAIの回答例が見られます。相談例はAIが要約・匿名化したものです（実際の入力文そのものではありません）。
           </p>
         </div>

@@ -85,7 +85,7 @@ export default async function HistoryPage() {
         </div>
 
         {history.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[var(--border)] p-16 text-center">
+          <div className="bg-[var(--surface)] rounded-[20px] p-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-[var(--primary-light)] flex items-center justify-center mx-auto mb-5">
               <BookOpen className="w-6 h-6 text-[var(--primary)]" />
             </div>
@@ -107,10 +107,10 @@ export default async function HistoryPage() {
             {history.map((item, i) => (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl border border-[var(--border)] overflow-hidden hover:shadow-[var(--card-shadow-hover)] transition-all duration-500"
+                className="bg-[var(--surface)] rounded-[20px] overflow-hidden hover:shadow-[var(--card-shadow-hover)] transition-all duration-500"
               >
                 {/* Date Header */}
-                <div className="px-7 py-4 border-b border-[var(--border-light)] flex justify-between items-center">
+                <div className="px-7 pt-5 pb-1 flex justify-between items-center">
                   <span className="text-xs text-[var(--text-light)]">
                     {item.createdAt}
                   </span>

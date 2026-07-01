@@ -95,7 +95,7 @@ export default function DocumentsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-6 h-6 text-[var(--primary)] animate-spin" />
           <span className="text-sm text-[var(--text-muted)]">読み込み中...</span>
@@ -300,7 +300,7 @@ export default function DocumentsPage() {
         <div className="flex flex-col lg:flex-row lg:gap-8 lg:items-start">
           {/* マイ文書 */}
           <aside className="order-2 lg:order-1 mt-10 lg:mt-0 w-full lg:w-[260px] lg:shrink-0">
-            <div className="bg-white rounded-2xl border border-[var(--border)] p-5">
+            <div className="bg-[var(--surface)] rounded-[20px] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-sm font-bold text-[var(--foreground)]">マイ文書</h2>
                 <button
@@ -324,7 +324,7 @@ export default function DocumentsPage() {
                       <li key={s.id}>
                         <div
                           className={`group flex items-start gap-2 rounded-xl px-3 py-2.5 transition-colors duration-300 ${
-                            active ? "bg-[var(--primary-light)]" : "hover:bg-[var(--primary-lighter)]"
+                            active ? "bg-[var(--soft-blue)]" : "hover:bg-[var(--pale-gray)]"
                           }`}
                         >
                           <button onClick={() => handleOpen(s.id)} className="flex-1 min-w-0 text-left">
@@ -364,14 +364,14 @@ export default function DocumentsPage() {
               </p>
             </div>
 
-            <div className="mb-6 bg-[var(--amber-bg)] border border-[var(--amber-border)]/30 px-5 py-3.5 rounded-2xl animate-fade-in-up delay-100">
-              <p className="text-[12px] text-[var(--amber-text-light)] leading-relaxed">
+            <div className="mb-6 bg-[var(--pale-gray)] px-5 py-3.5 rounded-2xl animate-fade-in-up delay-100">
+              <p className="text-[12px] text-[var(--muted)] leading-relaxed">
                 これは<strong>文書の記載を整理する参考情報</strong>です。最終的な可否や法的な判断ではありません。保存した文書は<strong>あなただけ</strong>が見られます。
               </p>
             </div>
 
             {/* 文書パネル */}
-            <div className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 mb-6 animate-fade-in-up delay-200 space-y-5">
+            <div className="bg-[var(--surface)] rounded-[20px] p-6 md:p-7 mb-6 animate-fade-in-up delay-200 space-y-5">
               <div>
                 <label className="text-sm font-bold text-[var(--foreground)] block mb-2.5">文書の種類</label>
                 <div className="flex flex-wrap gap-2">
@@ -384,10 +384,10 @@ export default function DocumentsPage() {
                         type="button"
                         onClick={() => setDocTypeId(t.id)}
                         disabled={isLoading}
-                        className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-2 border transition-colors duration-300 disabled:opacity-40 ${
+                        className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-2 transition-colors duration-300 disabled:opacity-40 ${
                           active
-                            ? "bg-[var(--primary)] text-white border-[var(--primary)]"
-                            : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--primary-lighter)] hover:text-[var(--primary-dark)]"
+                            ? "bg-[var(--deep-blue)] text-white"
+                            : "bg-[var(--pale-gray)] text-[var(--muted)] hover:bg-[var(--soft-blue)] hover:text-[var(--deep-blue)]"
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -406,7 +406,7 @@ export default function DocumentsPage() {
                   </span>
                 </div>
                 <textarea
-                  className="w-full h-40 p-5 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
+                  className="w-full h-40 p-5 rounded-xl bg-[var(--surface)] border border-[var(--hairline)] focus:border-[var(--deep-blue)] focus:bg-[var(--soft-blue)] outline-none resize-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm leading-relaxed transition-all duration-300"
                   placeholder={docType.placeholder}
                   value={document}
                   onChange={(e) => setDocument(e.target.value)}
@@ -427,7 +427,7 @@ export default function DocumentsPage() {
                   type="button"
                   onClick={() => saveDoc(turns, true)}
                   disabled={!document.trim() || saving}
-                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-4 py-2 transition-colors duration-300 disabled:opacity-40"
+                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--deep-blue)] bg-[var(--pale-gray)] hover:bg-[var(--soft-blue)] rounded-full px-4 py-2 transition-colors duration-300 disabled:opacity-40"
                 >
                   <Save className="w-3.5 h-3.5" />
                   {currentDocId ? "更新を保存" : "この文書を保存"}
@@ -466,7 +466,7 @@ export default function DocumentsPage() {
             {/* 質問入力 */}
             <form
               onSubmit={handleAsk}
-              className="bg-white rounded-2xl border border-[var(--border)] p-6 md:p-7 mb-10 animate-fade-in-up"
+              className="bg-[var(--surface)] rounded-[20px] p-6 md:p-7 mb-10 animate-fade-in-up"
             >
               <label className="text-sm font-bold text-[var(--foreground)] block mb-2.5">
                 {hasConversation ? "続けて質問する" : "聞きたいこと"}
@@ -475,7 +475,7 @@ export default function DocumentsPage() {
                 <input
                   ref={questionRef}
                   type="text"
-                  className="flex-1 p-4 border border-[var(--border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] outline-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm transition-all duration-300"
+                  className="flex-1 p-4 rounded-xl bg-[var(--surface)] border border-[var(--hairline)] focus:border-[var(--deep-blue)] focus:bg-[var(--soft-blue)] outline-none text-[var(--foreground)] placeholder-[var(--text-light)] text-sm transition-all duration-300"
                   placeholder={`例: ${docType.starters[0]}`}
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
@@ -484,7 +484,7 @@ export default function DocumentsPage() {
                 <button
                   type="submit"
                   disabled={isLoading || !document.trim() || !question.trim()}
-                  className="flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-5 rounded-xl text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
+                  className="flex items-center gap-2 bg-[var(--deep-blue)] hover:bg-[var(--deep-blue-dark)] text-white px-5 rounded-xl text-sm font-medium transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
@@ -503,7 +503,7 @@ export default function DocumentsPage() {
                         type="button"
                         onClick={() => pickQuestion(q)}
                         disabled={isLoading}
-                        className="text-xs text-[var(--text-muted)] bg-[var(--primary-lighter)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] border border-[var(--border)] rounded-full px-3.5 py-2 transition-colors duration-300 disabled:opacity-40"
+                        className="text-xs text-[var(--text-muted)] bg-[var(--pale-gray)] hover:bg-[var(--soft-blue)] hover:text-[var(--deep-blue)] rounded-full px-3.5 py-2 transition-colors duration-300 disabled:opacity-40"
                       >
                         {q}
                       </button>
@@ -518,7 +518,7 @@ export default function DocumentsPage() {
               <div className="space-y-6">
                 <ConsultationLinks />
                 {latestDisclaimer && (
-                  <div className="bg-white p-6 rounded-2xl text-[13px] text-[var(--text-muted)] border border-[var(--border)] leading-relaxed">
+                  <div className="bg-[var(--surface)] p-6 rounded-[20px] text-[13px] text-[var(--muted)] leading-relaxed">
                     {latestDisclaimer}
                   </div>
                 )}
@@ -537,7 +537,7 @@ function QuestionBubble({ text }: { text: string }) {
       <span className="w-7 h-7 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
         Q
       </span>
-      <p className="flex-1 text-sm font-medium text-[var(--foreground)] bg-white rounded-2xl border border-[var(--border)] px-4 py-3 leading-relaxed">
+      <p className="flex-1 text-sm font-medium text-[var(--foreground)] bg-[var(--surface)] rounded-[20px] px-4 py-3 leading-relaxed">
         {text}
       </p>
     </div>
@@ -550,7 +550,7 @@ function TurnView({ turn }: { turn: Turn }) {
       <QuestionBubble text={turn.question} />
 
       {turn.answer && (
-        <div className="bg-white rounded-2xl border border-[var(--border)] p-5 md:p-6">
+        <div className="bg-[var(--surface)] rounded-[20px] p-5 md:p-6">
           <h3 className="text-xs font-bold text-[var(--text-light)] tracking-widest uppercase mb-2.5 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />
             ざっくり言うと
@@ -567,7 +567,7 @@ function TurnView({ turn }: { turn: Turn }) {
         </div>
       ) : (
         turn.notFound && (
-          <div className="bg-white rounded-2xl border border-[var(--border)] p-6 flex items-center gap-3">
+          <div className="bg-[var(--surface)] rounded-[20px] p-6 flex items-center gap-3">
             <SearchX className="w-5 h-5 text-[var(--text-light)] shrink-0" />
             <p className="text-sm text-[var(--text-muted)]">この文書には、その質問に関する明確な記載が見当たりませんでした。</p>
           </div>
@@ -575,9 +575,9 @@ function TurnView({ turn }: { turn: Turn }) {
       )}
 
       {turn.checkWith && (
-        <div className="bg-[#f6fefb] rounded-2xl border border-[#059669]/20 p-4 flex items-start gap-3">
-          <span className="w-8 h-8 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-            <PhoneCall className="w-4 h-4 text-[#059669]" />
+        <div className="bg-[var(--soft-blue)] rounded-2xl p-4 flex items-start gap-3">
+          <span className="w-8 h-8 rounded-xl bg-[var(--surface)] flex items-center justify-center shrink-0">
+            <PhoneCall className="w-4 h-4 text-[var(--deep-blue)]" />
           </span>
           <div>
             <p className="text-xs font-bold text-[var(--foreground)]">最終確認はこちらへ</p>

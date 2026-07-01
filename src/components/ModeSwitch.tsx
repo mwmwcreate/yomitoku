@@ -13,7 +13,7 @@ export default function ModeSwitch() {
   const pathname = usePathname();
 
   return (
-    <div className="inline-flex items-center gap-1 p-1 bg-white rounded-full border border-[var(--border)] shadow-sm">
+    <div className="inline-flex items-center gap-1 p-1 bg-[var(--pale-gray)] rounded-full">
       {MODES.map((m) => {
         const active = pathname === m.href;
         const Icon = m.icon;
@@ -21,10 +21,10 @@ export default function ModeSwitch() {
           <Link
             key={m.href}
             href={m.href}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-300 ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-colors duration-300 ${
               active
-                ? "bg-[var(--primary)] text-white shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)]"
+                ? "bg-[var(--deep-blue)] text-white"
+                : "text-[var(--muted)] hover:text-[var(--deep-blue)]"
             }`}
           >
             <Icon className="w-4 h-4" />
