@@ -38,8 +38,8 @@
   --amber-text: var(--text);
   --amber-text-light: var(--muted);
 
-  --font-body: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: "Zen Kaku Gothic New", "Noto Sans JP", "Inter", sans-serif;
+  --font-body: "Poppins", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: "Poppins", "Noto Sans JP", sans-serif;
 }
 
 @theme inline {
