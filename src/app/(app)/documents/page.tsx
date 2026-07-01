@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
-import ModeSwitch from "@/components/ModeSwitch";
 import ClauseCard, { Finding } from "@/components/ClauseCard";
 import ConsultationLinks from "@/components/ConsultationLinks";
 import { DOCUMENT_TYPES, getDocumentType } from "@/lib/documentTypes";
@@ -290,13 +288,7 @@ export default function DocumentsPage() {
   const latestDisclaimer = turns.length ? turns[turns.length - 1].disclaimer : "";
 
   return (
-    <div className="min-h-screen bg-[var(--primary-lighter)]">
-      <Header />
-      <main className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-16">
-        <div className="mb-8 animate-fade-in-up">
-          <ModeSwitch />
-        </div>
-
+    <main className="max-w-5xl mx-auto px-6 md:px-10 pt-8 pb-12 md:pb-16">
         <div className="flex flex-col lg:flex-row lg:gap-8 lg:items-start">
           {/* マイ文書 */}
           <aside className="order-2 lg:order-1 mt-10 lg:mt-0 w-full lg:w-[260px] lg:shrink-0">
@@ -527,7 +519,6 @@ export default function DocumentsPage() {
           </div>
         </div>
       </main>
-    </div>
   );
 }
 

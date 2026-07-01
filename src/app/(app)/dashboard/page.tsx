@@ -3,13 +3,11 @@
 import { useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
 import DisclaimerAlert from "@/components/DisclaimerAlert";
 import LawCard, { Law } from "@/components/LawCard";
 import PrecedentCard, { Precedent } from "@/components/PrecedentCard";
 import TopicRanking from "@/components/TopicRanking";
 import ConsultationLinks from "@/components/ConsultationLinks";
-import ModeSwitch from "@/components/ModeSwitch";
 import { Send, Loader2, Scale, Gavel, Sparkles, MessageCirclePlus } from "lucide-react";
 
 type Phase = "idle" | "analyzing" | "done";
@@ -183,18 +181,13 @@ export default function Dashboard() {
   const showPrecedentSection = precedents.length > 0 || phase === "done" || (isLoading && showLaws);
 
   return (
-    <div className="min-h-screen bg-[var(--primary-lighter)]">
-      <Header />
-      <main className="max-w-6xl mx-auto px-6 md:px-10 py-12 md:py-16">
-        <div className="flex flex-col lg:flex-row lg:gap-8 lg:items-start">
+    <main className="max-w-6xl mx-auto px-6 md:px-10 pt-8 pb-12 md:pb-16">
+      <div className="flex flex-col lg:flex-row lg:gap-8 lg:items-start">
           <TopicRanking
             onUseExample={focusInput}
             className="order-2 lg:order-1 mt-10 lg:mt-0 w-full lg:w-[300px] lg:shrink-0 lg:sticky lg:top-24"
           />
           <div className="order-1 lg:order-2 lg:flex-1 lg:min-w-0">
-            <div className="mb-8 animate-fade-in-up">
-              <ModeSwitch />
-            </div>
             <div className="mb-10 animate-fade-in-up">
               <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">法律から調べる</h1>
               <p className="text-sm text-[var(--text-muted)]">気になる状況を入力して、関連する法律を調べてみましょう。</p>
@@ -344,6 +337,5 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-    </div>
   );
 }

@@ -11,9 +11,23 @@ const MODES = [
 
 export default function ModeSwitch() {
   const pathname = usePathname();
+  const activeIndex = Math.max(
+    0,
+    MODES.findIndex((m) => pathname === m.href),
+  );
 
   return (
-    <div className="inline-flex items-center gap-1 p-1 bg-[var(--pale-gray)] rounded-full">
+    <div className="relative grid grid-cols-2 p-1 bg-[var(--pale-gray)] rounded-full w-full max-w-md">
+      {/* スライドする選択ピル。このコンポーネントは永続レイアウトにあるため、
+          activeIndex が変わると transform がトランジションでなめらかに動く。 */}
+      <span
+        aria-hidden
+        className="absolute top-1 bottom-1 left-1 rounded-full bg-[var(--deep-blue)] transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{
+          width: "calc(50% - 4px)",
+          transform: activeIndex === 1 ? "translateX(100%)" : "translateX(0)",
+        }}
+      />
       {MODES.map((m) => {
         const active = pathname === m.href;
         const Icon = m.icon;
@@ -21,14 +35,12 @@ export default function ModeSwitch() {
           <Link
             key={m.href}
             href={m.href}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs md:text-sm font-medium transition-colors duration-300 ${
-              active
-                ? "bg-[var(--deep-blue)] text-white"
-                : "text-[var(--muted)] hover:text-[var(--deep-blue)]"
+            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-colors duration-300 ${
+              active ? "text-white" : "text-[var(--muted)] hover:text-[var(--deep-blue)]"
             }`}
           >
-            <Icon className="w-4 h-4" />
-            {m.label}
+            <Icon className="w-4 h-4 shrink-0" />
+            <span className="truncate">{m.label}</span>
           </Link>
         );
       })}
