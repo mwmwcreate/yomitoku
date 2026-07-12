@@ -1,7 +1,8 @@
 import Header from "@/components/Header";
 import DisclaimerAlert from "@/components/DisclaimerAlert";
 import ModeEntry from "@/components/ModeEntry";
-import { PenLine, Quote, Compass, ArrowRight } from "lucide-react";
+import StartButton from "@/components/StartButton";
+import { PenLine, Quote, Compass } from "lucide-react";
 
 const FEATURES = [
   {
@@ -43,13 +44,7 @@ export default function Home() {
               「これって大丈夫？」という疑問も、読むのが大変な契約書や規約も。
               どこが大事かを、AIが根拠とともに整理します。
             </p>
-            <a
-              href="#start"
-              className="inline-flex items-center gap-2 mt-9 bg-[var(--deep-blue)] hover:bg-[var(--deep-blue-dark)] text-white px-7 py-3.5 rounded-full text-sm font-medium transition-colors duration-300"
-            >
-              さっそく使ってみる
-              <ArrowRight className="w-4 h-4" />
-            </a>
+            <StartButton />
           </div>
         </section>
 
