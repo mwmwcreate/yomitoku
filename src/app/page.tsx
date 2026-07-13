@@ -34,7 +34,7 @@ export default function Home() {
         {/* Hero */}
         <section className="pt-8 md:pt-12 pb-14 md:pb-20">
           <div className="bg-[var(--soft-blue)] rounded-[28px] px-8 md:px-14 py-14 md:py-20">
-            <p className="text-sm font-medium text-[var(--deep-blue)] mb-5">むずかしい文章を、やさしく読み解くナビ</p>
+            <p className="text-sm font-medium text-[var(--deep-blue)] mb-5">むずかしい文章を、かみ砕く相談相手</p>
             <h1 className="text-3xl md:text-5xl font-bold leading-[1.35] text-[var(--text)] max-w-2xl">
               法律も、契約も、規約も。
               <br />
