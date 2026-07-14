@@ -12,12 +12,11 @@ export default function Header() {
       <div className="max-w-5xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
         <Link
           href={session ? "/dashboard" : "/"}
-          className="flex items-center gap-2 hover:opacity-70 transition-opacity duration-300"
+          className="flex items-center hover:opacity-70 transition-opacity duration-300"
+          aria-label="yomitoku ホーム"
         >
-          <span className="w-7 h-7 rounded-lg bg-[var(--deep-blue)] flex items-center justify-center">
-            <span className="text-white text-sm font-bold lowercase">y</span>
-          </span>
-          <span className="font-bold text-lg tracking-wide lowercase text-[var(--deep-blue)]">yomitoku</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="yomitoku" className="h-8 w-auto" />
         </Link>
 
         <nav className="flex items-center gap-2">
