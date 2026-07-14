@@ -29,7 +29,7 @@ export default function ModeEntry() {
 
   const go = (href: string) => {
     if (session) router.push(href);
-    else signIn("discord", { callbackUrl: href });
+    else signIn(undefined, { callbackUrl: href });
   };
 
   return (

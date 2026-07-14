@@ -13,7 +13,7 @@ export default function StartButton() {
 
   const handleClick = () => {
     if (session) router.push("/dashboard");
-    else signIn("discord", { callbackUrl: "/dashboard" });
+    else signIn(undefined, { callbackUrl: "/dashboard" });
   };
 
   return (

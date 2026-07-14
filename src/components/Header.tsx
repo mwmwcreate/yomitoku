@@ -44,7 +44,7 @@ export default function Header() {
             </>
           ) : (
             <button
-              onClick={() => signIn("discord", { callbackUrl: "/dashboard" })}
+              onClick={() => signIn(undefined, { callbackUrl: "/dashboard" })}
               className="flex items-center gap-2 bg-[var(--deep-blue)] hover:bg-[var(--deep-blue-dark)] text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors duration-300"
             >
               <LogIn className="w-4 h-4" />
