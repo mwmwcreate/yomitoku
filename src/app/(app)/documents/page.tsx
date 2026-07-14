@@ -44,7 +44,7 @@ type SavedMeta = {
   updatedAt: string;
 };
 
-const MAX_DOC_CHARS = 12000;
+const MAX_DOC_CHARS = 100000;
 
 const TYPE_ICONS: Record<string, LucideIcon> = {
   rent: Home,

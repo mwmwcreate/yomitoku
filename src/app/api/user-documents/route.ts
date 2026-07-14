@@ -7,7 +7,7 @@ import { getDocumentType } from '@/lib/documentTypes';
 // 「マイ文書」: ログインユーザー本人だけが見られる、私的な文書＆会話の保存。
 // 他人には一切見えず、知恵袋ランキング等にも一切使わない（userId で厳密に分離）。
 
-const MAX_DOC_CHARS = 12000;
+const MAX_DOC_CHARS = 100000;
 const MAX_TURNS = 50;
 const COLLECTION = 'userDocuments';
 

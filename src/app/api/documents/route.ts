@@ -12,7 +12,7 @@ const openai = new OpenAI({
 export const maxDuration = 60;
 
 // コスト対策の要: 1リクエストで読み込む文書量を確定的に頭打ちにする。
-const MAX_DOC_CHARS = 12000;
+const MAX_DOC_CHARS = 100000;
 const MAX_QUESTION_CHARS = 500;
 
 // プライバシー: 貼られた文書には個人情報が含まれうるため、Firestoreに保存しない。
